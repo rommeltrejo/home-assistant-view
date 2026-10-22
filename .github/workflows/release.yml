@@ -91,7 +91,7 @@ jobs:
           compression-level: 0
 
   verify-release:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'rommeltrejo/home-assistant-view' && github.event.head_commit.message == 'Enable one-shot 0.34 release'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'rommeltrejo/home-assistant-view' && contains(github.event.head_commit.message, 'Enable one-shot 0.34 release')
     needs: [linux, windows]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -120,7 +120,7 @@ jobs:
           retention-days: 1
 
   publish-release:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'rommeltrejo/home-assistant-view' && github.event.head_commit.message == 'Enable one-shot 0.34 release'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'rommeltrejo/home-assistant-view' && contains(github.event.head_commit.message, 'Enable one-shot 0.34 release')
     needs: [verify-release]
     runs-on: ubuntu-24.04
     timeout-minutes: 15

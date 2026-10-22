@@ -57,7 +57,7 @@ test("unsigned PR builds remain read-only and automatic one-shot release is gate
   assert.match(workflow, /needs: \[linux, windows\]/);
   assert.match(workflow, /needs: \[verify-release\]/);
   assert.match(workflow, /github.event_name == 'push'/);
-  assert.match(workflow, /github.event.head_commit.message == 'Enable one-shot 0\.34 release'/);
+  assert.match(workflow, /contains\(github.event.head_commit.message, 'Enable one-shot 0\.34 release'\)/);
   assert.doesNotMatch(workflow, /electron-forge publish/);
 });
 
