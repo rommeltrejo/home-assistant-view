@@ -47,13 +47,18 @@ test("upstream installer fails before commands or downloads even with update arg
   }
 });
 
-test("unsigned Actions builds do not publish releases or require secrets", () => {
+test("unsigned PR builds remain read-only and automatic one-shot release is gated", () => {
   const workflow = read(".github/workflows/release.yml");
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /branches: \['main'\]/);
   assert.match(workflow, /runs-on: windows-2022/);
   assert.match(workflow, /runs-on: ubuntu-24\.04/);
-  assert.doesNotMatch(workflow, /secrets\.|contents: write|electron-forge publish/);
+  assert.match(workflow, /permissions:\n {2}contents: read/);
+  assert.match(workflow, /needs: \[linux, windows\]/);
+  assert.match(workflow, /needs: \[verify-release\]/);
+  assert.match(workflow, /github.event_name == 'push'/);
+  assert.match(workflow, /contains\(github.event.head_commit.message, 'Enable one-shot 0\.34 release'\)/);
+  assert.doesNotMatch(workflow, /electron-forge publish/);
 });
 
 test("upstream assets, maker configuration and provenance remain available", () => {
