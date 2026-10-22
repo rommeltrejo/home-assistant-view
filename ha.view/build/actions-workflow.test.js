@@ -57,7 +57,7 @@ test('0.34 publisher is one-shot, gated by exact commit platform jobs and verifi
     assert.match(job.if, /github.event_name == 'push'/);
     assert.match(job.if, /github.ref == 'refs\/heads\/main'/);
     assert.match(job.if, /github.repository == 'rommeltrejo\/home-assistant-view'/);
-    assert.match(job.if, /Enable one-shot 0\.34 release/);
+    assert.match(job.if, /contains\(github.event.head_commit.message, 'Enable one-shot 0\.34 release'\)/);
     assert.equal(job['runs-on'], 'ubuntu-24.04');
     assert.ok(job['timeout-minutes'] <= 15);
     assert.equal(job.steps[0].with['persist-credentials'], false);
