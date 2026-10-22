@@ -6,7 +6,14 @@ HA View turns a Home Assistant dashboard into a touch-friendly, fullscreen displ
 
 ## Downloads
 
-Linux x64 and Windows x64 distributions will be available from the project Releases page after both platform builds pass. There are no downloads for this first source snapshot. Until then, [run from source](#run-from-source).
+**HA View 0.34** provides unsigned x64 distributions built from the same verified source commit. Download the archive and its matching SHA-256 file:
+
+| Platform | Download | Checksum |
+| --- | --- | --- |
+| Linux x64 kiosk | [tar.gz](https://github.com/rommeltrejo/home-assistant-view/releases/download/0.34/ha.view-0.34.0-linux-x64-kiosk.tar.gz) | [SHA-256](https://github.com/rommeltrejo/home-assistant-view/releases/download/0.34/ha.view-0.34.0-linux-x64-kiosk.tar.gz.sha256) |
+| Windows x64 portable | [ZIP](https://github.com/rommeltrejo/home-assistant-view/releases/download/0.34/ha.view-0.34.0-win32-x64-portable.zip) | [SHA-256](https://github.com/rommeltrejo/home-assistant-view/releases/download/0.34/ha.view-0.34.0-win32-x64-portable.zip.sha256) |
+
+Verify each downloaded archive with its sidecar (`sha256sum -c <filename>.sha256` on Linux, or compare with `Get-FileHash <filename> -Algorithm SHA256` on Windows). These are unsigned builds; installation and automatic updates are not enabled. [Run from source](#run-from-source) instead if preferred.
 
 ## Feature highlights
 
