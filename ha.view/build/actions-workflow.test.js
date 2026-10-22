@@ -14,17 +14,18 @@ const workflow = yaml.load(source);
 const pins = {
   'actions/checkout': '3d3c42e5aac5ba805825da76410c181273ba90b1',
   'actions/setup-node': '949feb2413d6458794dcd2491c4babbbce0c15c1',
-  'actions/upload-artifact': 'cf430e030ddbb5b0abf93d22962f4752f3646cd9'
+  'actions/upload-artifact': 'cf430e030ddbb5b0abf93d22962f4752f3646cd9',
+  'actions/download-artifact': '70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3'
 };
 test('unsigned workflow has bounded native runners and read-only triggers', () => {
   assert.deepEqual(workflow.permissions, { contents: 'read' });
   assert.deepEqual(Object.keys(workflow.on).sort(), ['pull_request', 'push', 'workflow_dispatch']);
   for (const event of ['push', 'pull_request']) assert.deepEqual(workflow.on[event].branches, ['main']);
-  assert.deepEqual(Object.keys(workflow.jobs).sort(), ['linux', 'windows']);
+  assert.deepEqual(Object.keys(workflow.jobs).sort(), ['linux', 'publish-release', 'verify-release', 'windows']);
   assert.equal(workflow.jobs.windows['runs-on'], 'windows-2022');
   assert.equal(workflow.jobs.linux['runs-on'], 'ubuntu-24.04');
-  assert.doesNotMatch(source, /secrets\.|publish|macos|contents: write|pull_request_target/i);
-  for (const job of Object.values(workflow.jobs)) {
+  assert.doesNotMatch(source, /macos|pull_request_target/i);
+  for (const job of [workflow.jobs.linux, workflow.jobs.windows]) {
     assert.ok(job['timeout-minutes'] > 0 && job['timeout-minutes'] <= 30);
     for (const step of job.steps.filter(s => s.uses)) {
       const [action, sha] = step.uses.split('@');
@@ -46,6 +47,39 @@ test('unsigned workflow has bounded native runners and read-only triggers', () =
     assert.match(paths[0], /(?:\.zip|\.tar\.gz)$/);
     assert.equal(paths[1], paths[0] + '.sha256');
   }
+});
+test('0.34 publisher is one-shot, gated by exact commit platform jobs and verified hashes', () => {
+  const verify = workflow.jobs['verify-release'];
+  const publish = workflow.jobs['publish-release'];
+  assert.deepEqual(verify.needs, ['linux', 'windows']);
+  assert.deepEqual(publish.needs, ['verify-release']);
+  for (const job of [verify, publish]) {
+    assert.match(job.if, /github.event_name == 'push'/);
+    assert.match(job.if, /github.ref == 'refs\/heads\/main'/);
+    assert.match(job.if, /github.repository == 'rommeltrejo\/home-assistant-view'/);
+    assert.match(job.if, /Enable one-shot 0\.34 release/);
+    assert.equal(job['runs-on'], 'ubuntu-24.04');
+    assert.ok(job['timeout-minutes'] <= 15);
+    assert.equal(job.steps[0].with['persist-credentials'], false);
+  }
+  assert.deepEqual(workflow.permissions, { contents: 'read' });
+  assert.deepEqual(publish.permissions, { contents: 'write', actions: 'read' });
+  assert.equal(verify.permissions, undefined);
+  assert.equal(publish.concurrency.group, 'one-shot-ha-view-0.34-publication');
+  assert.equal(publish.concurrency['cancel-in-progress'], false);
+  assert.match(verify.steps.map(s => s.run || '').join('\n'), /verify-release-assets\.py/);
+  assert.match(publish.steps.map(s => s.run || '').join('\n'), /publish-release\.py/);
+  assert.equal(publish.steps.at(-1).env.GH_TOKEN, '${{ secrets.GITHUB_TOKEN }}');
+  for (const job of [verify, publish]) for (const step of job.steps.filter(s => s.uses)) {
+    const [action, sha] = step.uses.split('@');
+    assert.equal(sha, pins[action]);
+  }
+  const script = fs.readFileSync(path.join(root, '.github/scripts/publish-release.py'), 'utf8');
+  assert.match(script, /absent\(f'.*git\/ref\/tags/);
+  assert.match(script, /absent\(f'.*releases\/tags/);
+  assert.match(script, /hashlib\.file_digest/);
+  assert.ok(script.indexOf('files = verify(') < script.indexOf("request('POST', f'{API}/git/refs'"));
+  assert.ok(script.indexOf("'draft': True") < script.indexOf("'draft': False"));
 });
 test('native host compilation, self-test and packaging remain ordered', () => {
   const steps = workflow.jobs.windows.steps;
