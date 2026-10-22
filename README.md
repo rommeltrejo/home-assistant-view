@@ -15,50 +15,35 @@ HA View turns a Home Assistant dashboard into a touch-friendly, fullscreen displ
 
 Verify each downloaded archive with its sidecar (`sha256sum -c <filename>.sha256` on Linux, or compare with `Get-FileHash <filename> -Algorithm SHA256` on Windows). These are unsigned builds; installation and automatic updates are not enabled. [Run from source](#run-from-source) instead if preferred.
 
-## Feature highlights
+## Explore HA View
+
+![Clock 1 idle face in HA View](docs/faces/clock-two.png)
+
+Connect to your dashboard, then choose what to show when the display is idle. The [screen guide](docs/README.md) covers setup, Home Assistant, faces, the browser, and settings. Images show the desktop interface; appearance may vary by platform.
 
 ### Home Assistant dashboard
 
-Use your existing Home Assistant dashboard as the heart of the display. HA View opens it in a fullscreen, touch-friendly window and gives you quick access to your configured pages and controls.
+Your existing Home Assistant dashboard stays at the center of HA View. Use its cards and navigation as you normally would.
 
-<!-- Feature image placeholder: Home Assistant dashboard -->
+![Home Assistant dashboard in HA View](docs/HA/dashboard-overview.png)
+
+[Using your dashboard](docs/HA/README.md)
 
 ### Idle faces
 
-When the display is idle, choose between two clock designs, a monthly calendar, an upcoming-events view, or Home Assistant weather. Open the face chooser with a press-and-hold, then swipe and tap to select a face.
+Choose between two clocks, Calendar, Upcoming Events, and Weather. Press and hold to open the face chooser, then swipe and tap a face. Calendar and Upcoming Events use calendars available to your Home Assistant account; Weather uses a configured Home Assistant weather entity.
 
-<!-- Feature image placeholder: Clock faces and face chooser -->
+![Clock 2 idle face in HA View](docs/faces/clock-one.png)
 
-### Weather Face
+[Choosing a face](docs/faces/README.md) · [Face settings and schedules](docs/settings/README.md)
 
-An uncluttered sky-inspired face shows current conditions, a large temperature, local time, and available wind, humidity and feels-like readings. Hourly forecasts are preferred; daily forecasts or current conditions alone are shown when hourly data is unavailable. Units and timezone come from Home Assistant.
+### Browser and Home Assistant tools
 
-Configure weather in **Home Assistant**, not HA View. The app automatically reads a usable weather entity through your existing authenticated connection. Without usable current conditions, Weather is grayed out and skipped by schedules and rotation; attempting to show it displays **“set up weather on Home Assistant”**. If data disappears while Weather is active, the app returns to the dashboard and re-enables Weather when readings recover. Weather is not added to your existing rotation automatically, and is not a Layout editor component.
+Use the built-in browser for a website, or open the Home Assistant shortcuts for devices, entities, scenes, automations, and cameras. What appears depends on your Home Assistant setup.
 
-### Face settings and schedules
+![HA View browser with address and navigation controls](docs/browser/browser-entry.png)
 
-Set how long the display waits before showing an idle face, choose which face appears, and create a daily schedule for the dashboard and your faces. As an alternative to the daily schedule, rotate an ordered selection of faces at a configurable interval, defaulting to five minutes. The chooser’s eye control hides or unhides faces persistently; rotation skips hidden faces without discarding the configured order, and the dashboard menu’s **Choose a face…** entry provides recovery if all rotation faces are hidden.
-
-Calendar views use calendars already readable by your Home Assistant account. Calendar and Upcoming Events stay effectively hidden until availability is confirmed. Without a readable calendar, attempting to unhide shows “No calendar to show” and leaves them hidden. A readable calendar with zero events is valid. Loading or connection failures do not overwrite saved visibility, and recovery does not unhide faces you manually hid.
-
-<!-- Feature image placeholder: Face settings and schedule -->
-
-### More Home Assistant tools
-
-HA View also provides shortcuts to Home Assistant areas such as devices, entities, scenes and automations, plus a route to a camera dashboard. What you can see and control depends on your Home Assistant setup and permissions.
-
-<!-- Feature image placeholder: Home Assistant tools and cameras -->
-
-## What’s available
-
-The current consolidated application includes:
-
-- The Home Assistant dashboard, Clock 1 and Clock 2, Calendar and Upcoming Events, the face chooser, persisted hide/unhide and calendar availability gating.
-- Inactivity settings, daily schedules, ordered face rotation, face layouts and their settings. Layout help explains Home Assistant’s own dashboard editor; it does not replace it.
-- Native startup URL and system settings, and the touch-friendly browser with DuckDuckGo search and page navigation.
-- Shortcuts to Home Assistant-owned search, status, activity, management and conversation services. Availability and authorization depend on your Home Assistant configuration; HA View does not supply replacement smart-home services.
-
-These features are implemented in the application source. Validate your own device and Home Assistant configuration before depending on a kiosk installation.
+[Using the browser](docs/browser/README.md) · [Home Assistant dashboard](docs/HA/README.md)
 
 ## Run from source
 
