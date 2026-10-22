@@ -1,0 +1,29 @@
+name: HA View bug
+description: Report an issue with HA View on Linux or Windows
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: HA View version
+      placeholder: "0.34"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: ["Linux x64", "Windows x64", "Source run"]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps and expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs (remove tokens, URLs, and personal information)

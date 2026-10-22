@@ -1,0 +1,64 @@
+/* HA.View-owned grouped settings; native controls and disclosure semantics. */
+:root{color-scheme:dark;--panel:#1c1c1e;--group:#2c2c2e;--line:#ffffff16;--muted:#b1b1b8;--accent:#91bcff}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0}
+body{font:16px/1.45 system-ui,-apple-system,BlinkMacSystemFont,sans-serif;color:#f5f5f7;background:transparent}
+[hidden]{display:none!important}
+#backdrop{position:fixed;inset:0;background:#0009;display:grid;place-items:center;padding:clamp(8px,3vw,28px);overflow:hidden}
+#dialog{width:min(100%,640px);max-height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden;overscroll-behavior:contain;background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:0 20px 64px #0009}
+.heading{padding:22px 24px 16px;flex:none}
+h1{margin:0;font-size:26px;letter-spacing:-.5px;font-weight:650}
+.settings-content{padding:0 24px 24px;overflow:auto;overscroll-behavior:contain;min-height:0;scroll-padding:12px}
+h2{font-size:15px;font-weight:600;color:var(--muted);margin:14px 0 10px}
+h3{font-size:16px;font-weight:600;margin:20px 0 8px}
+p{font-size:14px;color:var(--muted);margin:10px 0 16px;overflow-wrap:anywhere}
+hr{border:0;border-top:1px solid var(--line);margin:24px 0}
+.settings-group{background:var(--group);border-radius:12px;overflow:hidden}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 16px;min-height:68px}
+.setting-row+.setting-row{border-top:1px solid var(--line)}
+.setting-row>span,.setting-row>label{min-width:0}
+button,input,select{font:inherit;margin:0;min-width:0}
+button,input:not([type=checkbox]),select{min-height:44px;border:1px solid #ffffff24;border-radius:8px;padding:8px 12px;background:#ffffff09;color:inherit}
+button{min-width:44px;cursor:pointer;font-weight:500;white-space:nowrap}
+button:hover{background:#ffffff15}
+input[type=number]{width:100px;max-width:100%}
+/* Compact indicator inside a full touch target, including the checkbox itself. */
+input[type=checkbox]{appearance:none;width:44px;height:44px;flex:none;position:relative;cursor:pointer;accent-color:var(--accent)}
+input[type=checkbox]::before{content:"";position:absolute;inset:11px;border:1px solid #ffffff60;border-radius:5px;background:var(--panel)}
+input[type=checkbox]:checked::before{background:var(--accent);border-color:var(--accent)}
+input[type=checkbox]:checked::after{content:"";position:absolute;left:18px;top:14px;width:7px;height:12px;border:solid #10233e;border-width:0 2px 2px 0;transform:rotate(45deg)}
+@media(forced-colors:active){input[type=checkbox]{appearance:auto}}
+select{max-width:100%}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#rules:empty{display:none}
+#rules>div{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:10px;padding:16px}
+#rules>div+div,#rotation-faces>div+div{border-top:1px solid var(--line)}
+#rules>div>button{grid-column:1/-1;justify-self:end;color:var(--muted)}
+#rules>div>*{width:100%;max-width:100%;min-width:0}
+#add{margin-top:12px;color:var(--accent)}
+#rotation-faces>div{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:12px 16px;align-items:center}
+#rotation-faces label{display:flex;align-items:center;gap:10px;min-height:44px;overflow-wrap:anywhere}
+#rotation-faces button{padding:8px}
+.face-configuration{margin-top:24px}
+summary{cursor:pointer;min-height:68px;padding:14px 16px;overflow-wrap:anywhere}
+summary:focus-visible{outline-offset:-4px;border-radius:12px}
+.disclosure-hint{display:block;margin-left:19px;color:var(--muted);font-size:13px}
+.disclosure-content{padding:0 16px 16px;border-top:1px solid var(--line)}
+#calendar-entities label{display:flex;align-items:center;gap:12px;min-height:48px;padding:8px 0;overflow-wrap:anywhere}
+#calendar-entities br{display:none}
+#calendar-entities label+label{border-top:1px solid var(--line)}
+#idle-override{color:#edc88c}
+.settings-actions{flex:none;padding:12px 24px 18px;border-top:1px solid var(--line);background:var(--panel)}
+#status{white-space:pre-wrap;margin:0 0 10px;font-size:13px;max-height:58px;overflow:auto}
+#status:empty{display:none}
+.action-buttons{display:flex;justify-content:flex-end;gap:12px}
+#save{background:var(--accent);color:#10233e;border-color:transparent;font-weight:600}
+#save:hover{background:#abcaff}
+@media(max-width:400px){.heading{padding:18px 16px 12px}h1{font-size:24px}.settings-content{padding:0 16px 20px}.settings-actions{padding:12px 16px}.setting-row{padding:12px;gap:10px}.setting-row:has(select){align-items:stretch;flex-direction:column}#rotation-faces>div{padding:12px;grid-template-columns:minmax(0,1fr) auto auto}#rotation-faces label{grid-column:1/-1}.action-buttons>*{flex:1}}
+
+.heading-actions{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.heading-actions h1{min-width:0;overflow-wrap:anywhere}
+#dismiss{flex:none;min-width:44px;min-height:44px}
+.cancel-help{margin:0 0 8px;font-size:12px}
+#discard-confirmation{margin-bottom:12px}
+#discard-title{margin:0 0 8px;color:#f5f5f7}

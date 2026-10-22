@@ -1,0 +1,9 @@
+#actions .setting-action{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;min-height:68px;padding:12px 16px;border:0;border-radius:0;text-align:left;white-space:normal;overflow-wrap:anywhere}
+#actions .setting-action+.setting-action{border-top:1px solid var(--line)}
+.action-help{font-size:13px;font-weight:400;color:var(--muted)}
+.advanced-settings{margin-top:16px}
+.advanced-settings[open]>summary{border-bottom:1px solid var(--line)}
+.settings-actions{display:flex;justify-content:flex-end;align-items:center;gap:12px}
+.settings-actions #status{margin:0;flex:1}
+
+.browser-setting{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;min-height:56px;border:1px solid var(--line);border-radius:12px;cursor:pointer}.browser-setting input{width:20px;height:20px;accent-color:#007aff}

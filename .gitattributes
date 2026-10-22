@@ -1,0 +1,5 @@
+# Keep text source and build inputs LF on every runner; leave binaries untouched.
+* text=auto eol=lf
+
+# Windows launch scripts must retain CRLF; allow CR only for these paths.
+*.cmd text eol=crlf whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'self'; frame-src 'self'">
+<title>HA View — Choose a face</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080a0f;color:white;font-family:system-ui;touch-action:none;user-select:none}body{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:8px;padding:12px 0}
+header{width:100%;text-align:center;padding:0 3%}.right-controls{display:flex;gap:8px}.controls{display:flex;justify-content:space-between;margin-bottom:8px}h1{font-size:clamp(16px,3vh,28px);margin:0}p{color:#aab2bf;font-size:clamp(11px,2vh,17px);margin:8px}
+#preview{min-height:0;position:relative}
+#track{height:100%;min-height:0;width:100%;display:flex;transition:transform .22s ease}
+article{min-height:0;flex:0 0 100%;padding:0 10%;position:relative}iframe{width:100%;height:100%;border:2px solid #72aaff;border-radius:24px;pointer-events:none;background:black;box-shadow:0 0 30px #4477bb40}
+footer{width:100%;text-align:center;color:#aab2bf}#label{color:white;font-weight:600;margin:8px}button{min-width:44px;min-height:44px;padding:10px;background:#202631;border:0;border-radius:12px;color:white;pointer-events:none}
+
+article[data-hidden="true"] iframe{filter:grayscale(1);opacity:.45;border-color:#737b88;box-shadow:none}
+#hide{position:absolute;top:12px;right:calc(10% + 12px);width:44px;height:44px;padding:10px;z-index:2;pointer-events:none}
+#hide svg{width:24px;height:24px;display:block;pointer-events:none}#hide[aria-pressed="false"] .slash{display:none}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);padding:12px 18px;background:#202631;border-radius:12px;z-index:5}#toast:empty{display:none}
+</style>
+<header><div class="controls"><div class="right-controls"><button id="system">Settings</button></div><div class="right-controls"><button id="cancel">Cancel</button></div></div><h1>Choose a face</h1><p>Swipe left or right · Tap preview to choose</p></header>
+<div id="preview"><div id="track"></div><button id="hide" aria-label="Hide face" aria-pressed="false" title="Hide face"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="slash" d="M3 3l18 18"/></svg></button></div>
+<footer><div id="label"></div><span id="dots"></span><p>Escape to cancel</p></footer>
+<div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+<script src="face-changer-renderer.js"></script></html>

@@ -1,32 +1,46 @@
 {
-    "name": "touchkio",
-    "title": "TouchKio",
-    "description": "Home Assistant Touch Kiosk",
-    "homepage": "https://github.com/leukipp/touchkio",
-    "author": "leukipp",
-    "version": "1.6.0",
-    "license": "MIT",
-    "main": "index.js",
-    "scripts": {
-        "start": "electron . --web-url=https://demo.home-assistant.io,https://demo.immichkiosk.app --trace-warnings",
-        "build": "electron-forge make"
-    },
-    "prettier": {
-        "printWidth": 120
-    },
-    "devDependencies": {
-        "@electron-forge/cli": "^7.11.2",
-        "@electron-forge/maker-deb": "^7.11.2",
-        "@electron-forge/maker-zip": "^7.11.2",
-        "@electron-forge/publisher-github": "^7.11.2",
-        "electron": "^44.3.0",
-        "jszip": "^3.10.2",
-        "prettier": "^3.9.6"
-    },
-    "dependencies": {
-        "axios": "^1.20.0",
-        "bonjour-service": "^1.4.4",
-        "electron-log": "^5.4.4",
-        "mqtt": "^5.15.2"
-    }
+  "name": "ha.view",
+  "title": "HA View",
+  "description": "Touch-first ambient display for Home Assistant",
+  "author": "HA.View contributors",
+  "version": "0.34.0",
+  "license": "MIT",
+  "haView": { "projectRepository": { "url": "https://github.com/rommeltrejo/home-assistant-view", "verified": true } },
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "node ha.view/identity.js --check-packaging",
+    "test:identity": "node --test ha.view/identity.test.js",
+    "test:hooks": "node --test ha.view/hooks.test.js",
+    "test:build": "node --test ha.view/build/*.test.js",
+    "test:source": "node --test ha.view/runtime/source.test.js",
+    "build:windows-portable": "node ha.view/build/windows-portable.js",
+    "build:windows-kiosk": "node ha.view/build/windows-kiosk.js",
+    "build:linux-kiosk": "node ha.view/build/linux-kiosk.js",
+    "test:linux-kiosk": "python3 -m unittest discover -s os/linux/kiosk -p \"test_*.py\"",
+    "lint": "node ha.view/build/lint.js",
+    "test:all": "node ha.view/build/ci-test.js"
+  },
+  "prettier": {
+    "printWidth": 120
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^8.0.1",
+    "@electron-forge/maker-deb": "^8.0.1",
+    "@electron-forge/maker-zip": "^8.0.1",
+    "@electron/packager": "^20.3.0",
+    "@eslint/js": "^10.0.1",
+    "electron": "^44.3.0",
+    "electron-builder": "26.17.0",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0",
+    "jszip": "^3.10.2",
+    "prettier": "^3.9.6"
+  },
+  "dependencies": {
+    "axios": "^1.20.0",
+    "bonjour-service": "^1.4.4",
+    "electron-log": "^5.4.4",
+    "mqtt": "^5.15.2"
+  }
 }

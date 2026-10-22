@@ -1,30 +1,91 @@
-name: Release
+name: Unsigned x64 artifacts
 
 on:
+  workflow_dispatch:
   push:
-    tags:
-      - "v*"
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: unsigned-x64-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 30
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup node.js
-        uses: actions/setup-node@v7
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: "24.x"
-
-      - name: Install yarn
-        run: npm install --global yarn
-
+          persist-credentials: false
+      - name: Set up Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.x'
+          cache: npm
       - name: Install dependencies
-        run: yarn install
-
-      - name: Publish release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npm ci
+      - name: Static code analysis and standards
+        run: npm run lint
+      - name: Node regression tests
+        run: npm run test:all
+      - name: Compile and self-test native x64 host
+        shell: pwsh
         run: |
-          yarn electron-forge publish --arch arm64,x64
+          $native = Join-Path $env:RUNNER_TEMP 'HA.View.Kiosk.exe'
+          & "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:exe /platform:x64 /optimize+ /r:System.Web.Extensions.dll /r:Microsoft.CSharp.dll /r:System.Security.dll "/out:$native" (Join-Path $env:GITHUB_WORKSPACE 'os/windows/kiosk/native/Kiosk.cs')
+          if ($LASTEXITCODE -ne 0) { throw 'Native compilation failed' }
+          & $native self-test
+          if ($LASTEXITCODE -ne 0) { throw 'Native self-test failed' }
+          "HA_VIEW_KIOSK_NATIVE=$native" >> $env:GITHUB_ENV
+      - name: Build unsigned Windows portable ZIP
+        run: npm run build:windows-portable
+      - name: Upload complete Windows distribution
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ha.view-windows-x64-unsigned
+          path: |
+            out/windows-portable/ha.view-*-win32-x64-portable.zip
+            out/windows-portable/ha.view-*-win32-x64-portable.zip.sha256
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.x'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Static code analysis and standards
+        run: npm run lint
+      - name: Node regression tests
+        run: npm run test:all
+      - name: Linux kiosk Python regression tests
+        run: python3 -B -m unittest discover -s os/linux/kiosk -p 'test_*.py' -v
+      - name: Build unsigned Linux kiosk tarball
+        run: npm run build:linux-kiosk
+      - name: Upload complete Linux distribution
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ha.view-linux-x64-unsigned
+          path: |
+            out/linux-kiosk/ha.view-*-linux-x64-kiosk.tar.gz
+            out/linux-kiosk/ha.view-*-linux-x64-kiosk.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0

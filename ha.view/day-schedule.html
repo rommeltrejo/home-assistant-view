@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HA View — Face Settings</title>
+<link rel="stylesheet" href="face-settings.css">
+<div id="backdrop"><main id="dialog" role="dialog" aria-modal="true" aria-labelledby="title" tabindex="-1">
+  <header class="heading"><div class="heading-actions"><h1 id="title">Face Settings</h1><button id="dismiss" aria-label="Close Face Settings">Close</button></div><p>Automatic faces appear after you stop interacting. Choose one face, change it by time of day, or rotate through several faces.</p></header>
+  <div class="settings-content">
+    <section aria-labelledby="idle-title"><h2 id="idle-title">Inactivity timer</h2>
+      <div class="settings-group"><label class="setting-row idle-control" for="idle-minutes"><span>Minutes</span><input id="idle-minutes" type="number" min="0.1" max="1440" step="any" value="2" required></label></div>
+      <p id="idle-override" hidden></p>
+    </section>
+    <hr>
+    <section aria-labelledby="schedule-title"><h2 id="schedule-title">Automatic faces</h2>
+      <div class="settings-group">
+        <label class="setting-row"><span>Enable automatic faces</span><input id="enabled" type="checkbox"></label>
+        <div class="setting-row"><label for="strategy">Mode</label><select id="strategy"><option value="daily">Daily schedule</option><option value="rotation">Rotating faces</option></select></div>
+      </div>
+      <div id="daily-controls" class="schedule-content"><h3>Faces Schedule</h3><p>Choose which faces appear after inactivity throughout the day. Repeats daily.</p><div id="rules" class="settings-group"></div><button id="add">Add time</button></div>
+      <div id="rotation-controls" class="schedule-content" hidden>
+        <div class="settings-group"><div class="setting-row"><label for="rotation-minutes">Interval (minutes)</label><input id="rotation-minutes" type="number" min="0.1" max="1440" step="any" value="5" required></div></div>
+        <p>Show each selected face, then move to the next. Use Up / Down to set their order.</p><div id="rotation-faces" class="settings-group"></div>
+      </div>
+    </section>
+    <section class="face-configuration" aria-labelledby="face-config-heading"><h2 id="face-config-heading">Face configuration</h2>
+      <!-- Reuse this disclosure group for future per-face configuration. -->
+      <details class="settings-group face-disclosure" id="calendar-settings"><summary id="calendar-heading">Calendar <span class="disclosure-hint">Calendars &amp; Upcoming Events</span></summary><div class="disclosure-content"><p id="calendar-status">Loading readable calendars…</p><div id="calendar-entities"></div></div></details>
+    </section>
+  </div>
+  <footer class="settings-actions"><div id="discard-confirmation" hidden role="group" aria-labelledby="discard-title"><p id="discard-title">Discard unsaved changes?</p><div class="action-buttons"><button id="stay">Stay</button><button id="discard">Discard changes</button></div></div><p class="cancel-help" id="cancel-help">Cancel discards unsaved changes and closes.</p><p id="status" role="status" aria-live="polite"></p><div class="action-buttons"><button id="close" aria-describedby="cancel-help">Cancel</button><button id="save">Save settings</button></div></footer>
+</main></div>
+
+<script>
+const dialog=document.querySelector('#dialog');
+dialog.focus();
+document.addEventListener('keydown', event=>{
+  if(event.key!=='Tab')return;
+  const controls=[...dialog.querySelectorAll('button,input,select,summary,[tabindex]:not([tabindex="-1"])')].filter(el=>!el.disabled&&el.getClientRects().length);
+  if(!controls.length){event.preventDefault();dialog.focus();return}
+  const first=controls[0],last=controls.at(-1);
+  if(event.shiftKey&&(document.activeElement===first||!dialog.contains(document.activeElement))){event.preventDefault();last.focus()}
+  else if(!event.shiftKey&&(document.activeElement===last||!dialog.contains(document.activeElement))){event.preventDefault();first.focus()}
+});
+// The covering view owns all backdrop input; never forward it to the face underneath.
+document.querySelector('#backdrop').addEventListener('pointerdown', event=>{if(!dialog.contains(event.target))event.preventDefault()});
+</script><script src="day-schedule-renderer.js"></script></html>

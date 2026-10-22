@@ -2,3 +2,10 @@ node_modules/
 docs/
 out/
 build.json
+.DS_Store
+
+# Planning belongs in the external ../plan workspace, not this repository.
+/PLAN.md
+/BACKLOG.md
+/ROADMAP.md
+/os/linux-kiosk/

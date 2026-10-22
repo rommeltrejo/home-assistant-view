@@ -168,6 +168,8 @@ const init = async () => {
     minHeight: 188,
   });
 
+  require("../ha.view/installer-startup").dashboardReady(WEBVIEW.window);
+
   // Init global webview
   WEBVIEW.viewUrls.forEach((url, i) => {
     const view = new WebContentsView({
@@ -248,6 +250,10 @@ const init = async () => {
   await navigationEvents();
   await viewEvents();
   await appEvents();
+  require("../ha.view/hooks").init({ idleView, applyView });
+  require("../ha.view/dashboard-layout").init();
+  require("../ha.view/camera-dashboard").init();
+  require("../ha.view/management").init();
 
   return true;
 };
@@ -329,6 +335,7 @@ const updateZoom = () => {
  * @returns {void}
  */
 const applyView = (idle) => {
+  if (require("../ha.view/hooks").upstreamIdleChanged(idle)) return;
   const off = WEBVIEW.tracker.display.off > WEBVIEW.tracker.display.on;
   if (!off || ARGS.app_disable.includes("web_idle")) {
     if (WEBVIEW.tracker.view.timer) {
@@ -347,7 +354,7 @@ const applyView = (idle) => {
  * @param {number} [delay] - Idle set delay in milliseconds.
  * @returns {void}
  */
-const idleView = (idle, delay = 600 * 1000) => {
+const idleView = (idle, delay = require("../ha.view/hooks").idleDelay()) => {
   if (ARGS.app_disable.includes("web_idle")) {
     return;
   }
@@ -360,6 +367,8 @@ const idleView = (idle, delay = 600 * 1000) => {
   }
   if (!WEBVIEW.tracker.view.timer) {
     WEBVIEW.tracker.view.timer = setTimeout(() => {
+      WEBVIEW.tracker.view.timer = null;
+      if (!require("../ha.view/hooks").idleDeadline()) return;
       if (!WEBVIEW.tracker.view.idle) {
         console.verbose("Set View Idle:", true);
       }
@@ -379,6 +388,7 @@ const updateView = () => {
   if (!WEBVIEW.viewActive) {
     return;
   }
+  require("../ha.view/hooks").activeViewChanged();
   const view = WEBVIEW.views[WEBVIEW.viewActive];
   const url = view.webContents.getURL();
 
@@ -411,6 +421,7 @@ const updateView = () => {
   applyView(false);
   captureView(1000).then(() => {
     applyView(WEBVIEW.tracker.view.idle);
+    require("../ha.view/hooks").layoutChanged();
     EVENTS.emit("updateScreenshot");
   });
   EVENTS.emit("updatePage");
@@ -858,6 +869,7 @@ const resizeView = async () => {
   applyView(false);
   captureView(1000).then(() => {
     applyView(WEBVIEW.tracker.view.idle);
+    require("../ha.view/hooks").layoutChanged();
     EVENTS.emit("updateScreenshot");
   });
 };
@@ -993,7 +1005,7 @@ const headerEvents = async () => {
     switch (button.id) {
       case "release":
         const latest = APP.releases.latest;
-        if (WEBVIEW.viewActive && latest?.url) {
+        if (APP.releases.url && WEBVIEW.viewActive && latest?.url) {
           WEBVIEW.views[WEBVIEW.viewActive].webContents.loadURL(latest.url);
         }
         break;
@@ -1353,6 +1365,7 @@ const viewEvents = async () => {
               console.info("Update Last Active");
               integration.update();
             }
+            require("../ha.view/hooks").pointerEvent(e, mouse);
           }
           break;
         case "mouseDown":
@@ -1371,6 +1384,9 @@ const viewEvents = async () => {
                 hardware.setDisplayStatus("ON");
                 WEBVIEW.tracker.display.on = now;
                 idleView(false);
+                require("../ha.view/hooks").displayChanged("ON", true);
+              } else {
+                require("../ha.view/hooks").pointerEvent(e, mouse);
               }
               break;
             case "back":
@@ -1402,6 +1418,7 @@ const appEvents = async () => {
     if (status) {
       WEBVIEW.tracker.display[status.toLowerCase()] = new Date();
     }
+    require("../ha.view/hooks").displayChanged(status);
     idleView(status === "OFF");
   });
   EVENTS.on("updateStatus", () => {
@@ -1423,7 +1440,7 @@ const appEvents = async () => {
   });
   EVENTS.on("updateApp", () => {
     const latest = APP.releases.latest;
-    if (latest?.version) {
+    if (APP.releases.url && latest?.version) {
       const outdated = APP.version.localeCompare(latest.version, "en", { numeric: true }) < 0;
       WEBVIEW.header.webContents.send("button-hidden", {
         id: "release",
@@ -1482,6 +1499,8 @@ const appEvents = async () => {
  * @returns {Promise<void>}
  */
 const latestRelease = async () => {
+  // HA.View has no release endpoint until a project repository is verified.
+  if (!APP.releases.url) return;
   try {
     const response = await axios.get(APP.releases.url, { timeout: 20000 });
     const release = response?.data?.find((item) => {

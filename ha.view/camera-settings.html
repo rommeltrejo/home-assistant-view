@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'"><title>HA View Cameras</title>
+<style>body{font:16px -apple-system,BlinkMacSystemFont,sans-serif;background:#17191d;color:#eee;margin:24px;line-height:1.5}input{box-sizing:border-box;width:100%;padding:12px;font:inherit}button{padding:12px;margin:12px 8px 12px 0;font:inherit;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #71caff}p{max-width:65ch}#status{border-left:3px solid #71caff;padding-left:12px}#error{color:#ffb5a7}</style><link rel="stylesheet" href="face-settings.css"><link rel="stylesheet" href="tool-modal.css"></head>
+<body><main class="tool-card"><header class="tool-heading"><button id="close">Close</button></header><div class="tool-content"><h1>Camera Dashboard</h1><p>Enter the path of an existing Home Assistant camera dashboard.</p>
+<label for="path">Dashboard path</label><input id="path" placeholder="Example: /dashboard-cameras/overview" autocomplete="off" spellcheck="false" aria-describedby="guidance">
+<p id="guidance">Save the path, then choose Open camera dashboard. Clear the path and save to disable.</p>
+<button id="save">Save path</button><button id="open" disabled>Open camera dashboard</button>
+<p id="status" role="status" aria-live="polite"></p><p id="error" role="alert"></p>
+<details><summary>Dashboard setup</summary><p>Create the dashboard in Home Assistant first. Use a path or HTTP(S) URL on your configured Home Assistant server.</p></details>
+</div></main><script src="camera-renderer.js"></script><script src="modal-interaction.js"></script></body></html>

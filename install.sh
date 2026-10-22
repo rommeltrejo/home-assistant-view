@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# HA.View is source-only. Preserve the upstream installer below for future review.
+printf "%s\n" "HA View is source-only: installation and updates are disabled." >&2
+exit 1
+
 # Read arguments
 ARG_EARLY=false
 ARG_UPDATE=false

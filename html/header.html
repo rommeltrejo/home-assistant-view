@@ -1,23 +1,29 @@
 <!doctype html>
-<html>
+<html lang="en" data-theme="dark">
   <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HA View window controls</title>
     <meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline'" />
     <style>
+      :root,
       [data-theme="dark"] {
-        --primary-color: rgba(229, 229, 229, 1);
-        --background-color: rgba(66, 67, 68, 1);
-        --release-color: rgba(10, 132, 255, 1);
-        --minimize-color: rgba(52, 199, 89, 1);
-        --fullscreen-color: rgba(255, 149, 0, 1);
-        --terminate-color: rgba(255, 59, 48, 1);
+        color-scheme: dark;
+        --primary-color: rgba(248, 248, 250, 0.92);
+        --muted-color: rgba(248, 248, 250, 0.62);
+        --background-color: rgba(20, 21, 24, 0.94);
+        --control-hover: rgba(255, 255, 255, 0.1);
+        --release-color: rgba(103, 176, 255, 1);
+        --terminate-color: rgba(255, 112, 105, 1);
       }
       [data-theme="light"] {
-        --primary-color: rgba(26, 26, 26, 1);
-        --background-color: rgba(237, 236, 235, 1);
-        --release-color: rgba(0, 122, 255, 1);
-        --minimize-color: rgba(52, 199, 89, 1);
-        --fullscreen-color: rgba(255, 149, 0, 1);
-        --terminate-color: rgba(255, 59, 48, 1);
+        color-scheme: light;
+        --primary-color: rgba(28, 29, 32, 0.9);
+        --muted-color: rgba(28, 29, 32, 0.56);
+        --background-color: rgba(249, 249, 247, 0.94);
+        --control-hover: rgba(0, 0, 0, 0.07);
+        --release-color: rgba(0, 105, 218, 1);
+        --terminate-color: rgba(205, 44, 39, 1);
       }
       ::-webkit-scrollbar {
         display: none;
@@ -25,7 +31,13 @@
       * {
         margin: 0;
         padding: 0;
-        cursor: pointer;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        -webkit-font-smoothing: antialiased;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--primary-color);
       }
       html {
         width: 100%;
@@ -42,17 +54,18 @@
         display: flex;
         align-items: center;
         flex: 1 1 0%;
+        min-width: 0;
+        justify-content: center;
+        padding: 0 8px;
         height: 100vh;
         -webkit-app-region: drag;
       }
       h1 {
-        position: absolute;
-        transform: translate(-50%, -50%);
-        top: 50%;
-        left: 50%;
-        font-size: 18px;
-        font-weight: 500;
-        font-family: sans-serif;
+        max-width: 100%;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
@@ -67,8 +80,8 @@
         align-items: center;
         flex: 0 0 auto;
         height: 100vh;
-        padding: 0px 10px;
-        column-gap: 10px;
+        padding: 0 6px;
+        column-gap: 4px;
         list-style-type: none;
         background: var(--background-color);
         position: relative;
@@ -88,10 +101,40 @@
         pointer-events: none;
       }
       button {
-        width: 32px;
-        height: 32px;
-        border: none;
-        background-color: transparent;
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: min(40px, 100vh);
+        cursor: pointer;
+        touch-action: manipulation;
+        border: 0;
+        border-radius: 14px;
+        background: transparent;
+        transition:
+          background-color 160ms ease,
+          transform 160ms ease;
+      }
+      @media (hover: hover) {
+        button:hover:not(:disabled) {
+          background-color: var(--control-hover);
+        }
+      }
+      button:active:not(:disabled) {
+        background-color: var(--control-hover);
+      }
+      button:focus-visible {
+        outline: 2px solid var(--release-color);
+        outline-offset: -2px;
+      }
+      button svg {
+        width: 21px;
+        height: 21px;
+        fill: var(--muted-color);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        button {
+          transition: none;
+        }
       }
       svg {
         pointer-events: none;
@@ -99,22 +142,17 @@
       #release > svg {
         fill: var(--release-color);
       }
-      #minimize > svg {
-        fill: var(--minimize-color);
-      }
-      #fullscreen > svg {
-        fill: var(--fullscreen-color);
-      }
-      #terminate > svg {
+      #terminate:hover:not(:disabled) > svg,
+      #terminate:focus-visible > svg {
         fill: var(--terminate-color);
       }
     </style>
   </head>
   <body>
-    <menu>
+    <menu aria-label="App update">
       <li class="hidden">
-        <button id="release">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <button id="release" type="button" aria-label="Download update" title="Download update">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>download-circle</title>
             <path
               d="M12 2C17.5 2 22 6.5 22 12C22 17.5 17.5 22 12 22C6.5 22 2 17.5 2 12C2 6.5 6.5 2 12 2M8 17H16V15H8V17M16 10H13.5V6H10.5V10H8L12 14L16 10Z"
@@ -124,20 +162,20 @@
       </li>
     </menu>
     <header>
-      <h1 id="title">TouchKio</h1>
+      <h1 id="title">HA View</h1>
     </header>
-    <menu>
+    <menu aria-label="Window controls">
       <li>
-        <button id="minimize">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <button id="minimize" type="button" aria-label="Minimize window" title="Minimize window">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>minus-circle</title>
             <path d="M17,13H7V11H17M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
           </svg>
         </button>
       </li>
       <li>
-        <button id="fullscreen">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <button id="fullscreen" type="button" aria-label="Toggle fullscreen" title="Toggle fullscreen">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>chevron-up-circle</title>
             <path
               d="M22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2A10,10 0 0,1 22,12M7.4,15.4L12,10.8L16.6,15.4L18,14L12,8L6,14L7.4,15.4Z"
@@ -146,8 +184,8 @@
         </button>
       </li>
       <li>
-        <button id="terminate">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <button id="terminate" type="button" aria-label="Close HA View" title="Close HA View">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>close-circle</title>
             <path
               d="M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z"
@@ -162,14 +200,16 @@
       const registerSendEvents = () => {
         document.querySelectorAll("button").forEach((button) => {
           button.addEventListener("click", (e) => {
-            ipcRenderer.send("button-click", { id: e.target.id });
+            ipcRenderer.send("button-click", { id: e.currentTarget.id });
           });
         });
       };
 
       const registerReceiveEvents = () => {
         ipcRenderer.on("button-disabled", (e, button) => {
-          document.getElementById(button.id).parentNode.classList.toggle("disabled", button.disabled);
+          const control = document.getElementById(button.id);
+          control.disabled = button.disabled;
+          control.parentNode.classList.toggle("disabled", button.disabled);
         });
         ipcRenderer.on("button-hidden", (e, button) => {
           document.getElementById(button.id).parentNode.classList.toggle("hidden", button.hidden);

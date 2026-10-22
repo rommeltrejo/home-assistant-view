@@ -1,354 +1,99 @@
-# TouchKio
-[![build](https://img.shields.io/github/actions/workflow/status/leukipp/touchkio/release.yml?style=flat-square)](https://github.com/leukipp/touchkio/actions)
-[![date](https://img.shields.io/github/release-date/leukipp/touchkio?style=flat-square)](https://github.com/leukipp/touchkio/releases)
-[![platform](https://img.shields.io/badge/platform-%20arm64%20|%20x64%20-teal?style=flat-square)](https://github.com/leukipp/touchkio/releases)
-[![downloads](https://img.shields.io/github/downloads/leukipp/touchkio/total?style=flat-square)](https://github.com/leukipp/touchkio/releases)
-[![sponsor](https://img.shields.io/github/sponsors/leukipp?color=red&logo=github&style=flat-square)](https://github.com/sponsors/leukipp)
+# HA View
 
-**TouchKio** is a Node.js application that utilizes [Electron](https://www.electronjs.org) to create a kiosk mode window specifically designed for a Home Assistant dashboard.
-This tool is packaged as a **.deb** file, making it easy to launch the kiosk application on any Debian based Linux [hardware](https://github.com/leukipp/touchkio/blob/main/HARDWARE.md) (e.g. **Raspberry Pi**) equipped with a **DSI or HDMI** Touch Display.
-Additional releases for other Linux systems are available as **.zip** file.
+HA View turns a Home Assistant dashboard into a touch-friendly, fullscreen display, with a clock or calendar face ready when the screen is idle. It builds on [TouchKio](https://github.com/leukipp/touchkio), bringing its dashboard, browser and MQTT foundations into an Electron app.
 
-[![display](https://raw.githubusercontent.com/leukipp/touchkio/main/img/display.png)](https://github.com/leukipp/touchkio/blob/main/img/display.png)
+> HA View is an independent project and is not affiliated with Apple.
 
-This implementation addresses common issues encountered when using the built-in browser running in fullscreen mode on a Linux device with Touch Display.
-Moreover, the device running the **kiosk application** also offers several **Home Assistant MQTT** sensors, enhancing it's functionality for automation purposes.
+## Downloads
 
-## Features
-- [x] Fast and easy setup.
-- [x] Remember login credentials.
-- [x] Touch optimized web browsing.
-- [x] Dynamic window status bar layout.
-- [x] Side panel widget for kiosk control.
-- [x] Navigation bar to switch between pages.
-- [x] Adjustable browser zoom and theme support.
-- [x] Extended touch screen wake-up functionality.
-- [x] Remote controllable via MQTT.
-  - [x] Toggle the on-screen keyboard.
-  - [x] Touch display power and brightness.
-  - [x] Manage kiosk window status and zoom.
-  - [x] Screenshot image of the kiosk webview.
-  - [x] Show network interfaces and addresses.
-  - [x] List all available system package upgrades.
-  - [x] Multi-webpage switching and url navigation.
-  - [x] Volume control for connected audio outputs.
-  - [x] Execute system reboot and shutdown commands.
-  - [x] Monitor battery, temperature, processor and memory usage.
+Linux x64 and Windows x64 distributions will be available from the project Releases page after both platform builds pass. There are no downloads for this first source snapshot. Until then, [run from source](#run-from-source).
 
-The kiosk application can be executed with command line arguments to load a **Home Assistant dashboard in fullscreen** mode.
-Additionally, a **MQTT endpoint** can be defined, allowing the application to provide controls and sensors for the Linux device and the connected Touch Display.
+## Feature highlights
 
-## Setup
-Before you begin, make sure that you have a Linux device configured and operational with a [compatible](https://github.com/leukipp/touchkio/blob/main/HARDWARE.md) Touch Display.
-This guide assumes that you are using a Raspberry Pi with the latest version of Raspberry Pi OS **(64-bit)**, along with a desktop environment (preferably using **labwc**).
-However, the **.deb** setup procedure is also compatible with any other Debian based 64-bit system.
+### Home Assistant dashboard
 
-### Optional
-To utilize the sensor features of your device through Home Assistant, it's essential to have a **MQTT broker running** and the **MQTT integration installed** on your Home Assistant instance.
-This setup allows seamless communication between your kiosk device and Home Assistant, enabling **real-time data exchange**.
+Use your existing Home Assistant dashboard as the heart of the display. HA View opens it in a fullscreen, touch-friendly window and gives you quick access to your configured pages and controls.
 
-[![mqtt](https://raw.githubusercontent.com/leukipp/touchkio/main/img/mqtt.png)](https://github.com/leukipp/touchkio/blob/main/img/mqtt.png)
+<!-- Feature image placeholder: Home Assistant dashboard -->
 
-For a comprehensive guide on setting up MQTT with Home Assistant, please refer to the official documentation available here: https://www.home-assistant.io/integrations/mqtt.
+### Idle faces
 
-## Installation
-On the first run of the application, you will encounter a **setup procedure (CLI)** and the Home Assistant **login screen (UI)**.
-It's recommended to create a dedicated Home Assistant user (local access only) for your kiosk device.
+When the display is idle, choose between two clock designs, a monthly calendar, an upcoming-events view, or Home Assistant weather. Open the face chooser with a press-and-hold, then swipe and tap to select a face.
 
-You might also need a physical keyboard or remote VNC access to input these credentials once.
-If your hardware is [supported](https://github.com/leukipp/touchkio/blob/main/HARDWARE.md) you may be able to activate the on-screen keyboard using the side [widget](https://github.com/leukipp/touchkio/issues/16).
-After the first login the Home Assistant credentials are stored inside the `~/.config/touchkio/` folder.
+<!-- Feature image placeholder: Clock faces and face chooser -->
 
-#### Option 1 - The easy way
-Run this command to download and install the latest **.deb** (arm64 or x64) release.
-It will also create a systemd user file for auto-startup and will guide you through the setup process:
-```bash
-bash <(wget -qO- https://raw.githubusercontent.com/leukipp/touchkio/main/install.sh)
-```
-Make sure that you run this with your **standard user** and not with root (sudo).
-If you are paranoid, or smart, or both, have a look into the [install.sh](https://github.com/leukipp/touchkio/blob/main/install.sh) script before executing external code on your machine.
+### Weather Face
 
-The systemd **user service** is enabled by default and the kiosk application should start automatically the next time you boot.
-If you need manual control use:
-```bash
-systemctl --user start|stop|status|restart touchkio.service
+An uncluttered sky-inspired face shows current conditions, a large temperature, local time, and available wind, humidity and feels-like readings. Hourly forecasts are preferred; daily forecasts or current conditions alone are shown when hourly data is unavailable. Units and timezone come from Home Assistant.
+
+Configure weather in **Home Assistant**, not HA View. The app automatically reads a usable weather entity through your existing authenticated connection. Without usable current conditions, Weather is grayed out and skipped by schedules and rotation; attempting to show it displays **“set up weather on Home Assistant”**. If data disappears while Weather is active, the app returns to the dashboard and re-enables Weather when readings recover. Weather is not added to your existing rotation automatically, and is not a Layout editor component.
+
+### Face settings and schedules
+
+Set how long the display waits before showing an idle face, choose which face appears, and create a daily schedule for the dashboard and your faces. As an alternative to the daily schedule, rotate an ordered selection of faces at a configurable interval, defaulting to five minutes. The chooser’s eye control hides or unhides faces persistently; rotation skips hidden faces without discarding the configured order, and the dashboard menu’s **Choose a face…** entry provides recovery if all rotation faces are hidden.
+
+Calendar views use calendars already readable by your Home Assistant account. Calendar and Upcoming Events stay effectively hidden until availability is confirmed. Without a readable calendar, attempting to unhide shows “No calendar to show” and leaves them hidden. A readable calendar with zero events is valid. Loading or connection failures do not overwrite saved visibility, and recovery does not unhide faces you manually hid.
+
+<!-- Feature image placeholder: Face settings and schedule -->
+
+### More Home Assistant tools
+
+HA View also provides shortcuts to Home Assistant areas such as devices, entities, scenes and automations, plus a route to a camera dashboard. What you can see and control depends on your Home Assistant setup and permissions.
+
+<!-- Feature image placeholder: Home Assistant tools and cameras -->
+
+## What’s available
+
+The current consolidated application includes:
+
+- The Home Assistant dashboard, Clock 1 and Clock 2, Calendar and Upcoming Events, the face chooser, persisted hide/unhide and calendar availability gating.
+- Inactivity settings, daily schedules, ordered face rotation, face layouts and their settings. Layout help explains Home Assistant’s own dashboard editor; it does not replace it.
+- Native startup URL and system settings, and the touch-friendly browser with DuckDuckGo search and page navigation.
+- Shortcuts to Home Assistant-owned search, status, activity, management and conversation services. Availability and authorization depend on your Home Assistant configuration; HA View does not supply replacement smart-home services.
+
+These features are implemented in the application source. Validate your own device and Home Assistant configuration before depending on a kiosk installation.
+
+## Run from source
+
+From the repository root, install dependencies and launch the Electron app directly:
+
+```sh
+npm ci
+npm start
 ```
 
-<details><summary>Alternatives</summary><div>
+`npm start` runs `electron .` against this source tree; it does not package, sign or deploy an app. The app uses your saved Home Assistant URL. To supply a URL explicitly, use `npm start -- --web-url=http://YOUR-HA:8123/ --app-kiosk=framed`.
 
-#### Option 2 - The standard way
-When connected via SSH, it's necessary to export the display variables first, as outlined in the [development](https://github.com/leukipp/touchkio?tab=readme-ov-file#development) section.
-The [install.sh](https://github.com/leukipp/touchkio/blob/main/install.sh) script mentioned above performs the following tasks (and you just have to do it manually):
-- [Download](https://github.com/leukipp/touchkio/releases/latest) the latest version file that is suitable for your architecture (arm64 or x64).
-  - Debian (**deb**): Open a terminal and execute the following command to install the application, e.g: `sudo apt install ./touchkio_1.x.x_arm64.deb && touchkio --setup`
-  - Others (**zip**): Extract the archive and run the binary, e.g: `unzip touchkio-linux-x64-1.x.x.zip && cd touchkio-linux-x64 && ./touchkio --setup`
-- If you just want to load a Home Assistant dashboard without further control you are good to go, e.g: `touchkio --web-url=https://demo.home-assistant.io`
-  - The `--web-url` doesn't necessarily need to be a Home Assistant url, any kind of website can be shown in kiosk mode.
-  - Only when using the MQTT integration via `--mqtt-*`, a running Home Assistant instance is required.
-- If you need the application to be automatically started on boot, create a systemd file.
+On a first launch without a saved URL, enter your dashboard URL in native settings. Home Assistant handles dashboard login. Existing settings are not reset.
 
-#### Option 3 - The hard way
-Pre-built release files are available for arm64 and x64 Linux systems.
-If you are using a different architecture, you can still utilize this repository to build your own application.
+## Windows portable
 
-For more information please refer to the [development](https://github.com/leukipp/touchkio?tab=readme-ov-file#development) section, however this will do the job:
-```bash
-yarn build
-```
+Extract the **whole ZIP folder** and double-click **Run.cmd**. The bundled Electron app needs no Node, compiler, or installation. First run opens native URL settings; an optional `Run.cmd --web-url=http://YOUR-HA:8123/ --app-kiosk=framed` supplies the URL. Your saved profile is retained.
 
-</div></details>
+**Install-Kiosk.cmd** and **Update-Kiosk.cmd** are separate, optional per-user kiosk operations for logon startup and restart recovery. Direct Run does not install or update a kiosk. Keep the separate kiosk folder intact. See `os/windows/portable/README.md`.
 
-#### Update
-If you have already installed TouchKio and want to upgrade to the latest version, simply install the newer version over the existing one.
+This build is unsigned: **Unknown publisher is expected**. Windows protections remain unchanged; no security bypass or certificate setup is included.
 
-The [install.sh](https://github.com/leukipp/touchkio/blob/main/install.sh) script can also be run to update an existing installation to the **latest version**.
-The setup procedure can be skipped to use the existing default arguments from the configuration file:
-```bash
-bash <(wget -qO- https://raw.githubusercontent.com/leukipp/touchkio/main/install.sh) update
-```
+Build from this source tree with Node 24 and a Windows x64 native host compiled from `os/windows/kiosk/native/Kiosk.cs`: `HA_VIEW_KIOSK_NATIVE=/path/to/HA.View.Kiosk.exe npm run build:windows-portable`. Output is `out/windows-portable`. Existing strict signing build modes are separate and unchanged.
 
-## Configuration
-Running `touchkio --setup` will prompt you to enter arguments that will be used when the application starts without any specified arguments.
-These default arguments are stored in `~/.config/touchkio/Arguments.json`, where they can also be modified.
+macOS packaging remains outside the source-run workflow. Physical wake/hardware behavior and macOS MQTT/device integration are not claimed verified.
 
-### WEB
-The available arguments to control the kiosk application via terminal are as follows:
-| Name                      | Default | Description                                                                                                |
-| ------------------------- | ------- | ---------------------------------------------------------------------------------------------------------- |
-| `--web-url` (Required)    | -       | Url of the Home Assistant instance<a id="ref1"></a><sup><a href="#foot1">[1]</a></sup> (HTTP(S)://IP:PORT) |
-| `--web-theme` (Optional)  | `dark`  | Theme settings of the web browser (`light` or `dark`)                                                      |
-| `--web-zoom` (Optional)   | `1.25`  | Zoom settings of the web browser (`1.0` is `100%`)                                                         |
-| `--web-widget` (Optional) | `true`  | Enables the sidebar widget (`true` or `false`)                                                             |
-| `--web-pager` (Optional)  | `true`  | Enables the sidebar pager (`true` or `false`)                                                              |
+## Linux prebuilt
 
-These arguments allow you to customize the appearance of the web browser view.
+Extract the **whole tar.gz folder**, preserving executable permissions, then run `./Run.sh` from that folder (or invoke it by path from another directory). It invokes bundled Electron directly and forwards arguments, for example `./Run.sh --web-url=http://YOUR-HA:8123/ --app-kiosk=framed`. No Node, compiler, kiosk installation or CLI credentials are needed. A supported graphical Linux desktop and Electron shared libraries are required. First launch without a saved URL opens native settings, followed by Home Assistant’s own login.
 
-For example:
-```bash
-touchkio --web-url=http://192.168.1.42:8123 --web-theme=light --web-zoom=1.0
-```
+Direct extraction depends on the distribution allowing Chromium’s sandbox to initialize. On desktops that restrict unprivileged user namespaces, direct extracted execution may fail. Do **not** add `--no-sandbox` or disable system security policy. Use `./install.sh` for the existing standard root-owned installation and Chromium setuid helper; it requires Python 3 and normal sudo authentication, runs the UI as your normal user, and enables desktop-login startup/recovery. See `os/linux/kiosk/README.md` for update, rollback and dependency guidance. Direct Run itself neither installs nor enables a watchdog.
 
-> <a id="foot1"></a><a href="#ref1">[1]</a>: This doesn't necessarily have to be a Home Assistant Url.
-> You can configure multiple pages by separating them with a comma:
-> `touchkio --web-url=https://demo.home-assistant.io,https://demo.immichkiosk.app`.
+## TouchKio capabilities
 
-In the `~/.config/touchkio/Arguments.json` file:
-```json
-{
-  "web_url": [
-    "https://demo.home-assistant.io",
-    "https://demo.immichkiosk.app"
-  ]
-}
-```
+HA View builds on TouchKio’s existing browser and MQTT features. Depending on the platform, hardware and MQTT setup, these include touch-focused browsing, page navigation, zoom and themes; screen wake behavior; and remote access to tools such as the on-screen keyboard, display controls, network details, system status and sensors.
 
-### MQTT
-To broadcast your local sensor data to Home Assistant, you can use the following arguments, which require a running MQTT broker:
-| Name                          | Default         | Description                                                                              |
-| ----------------------------- | --------------- | ---------------------------------------------------------------------------------------- |
-| `--mqtt-url` (Required)       | -               | Url of the MQTT broker instance (MQTT(S)://IP:PORT)                                      |
-| `--mqtt-user` (Required)      | -               | Username which is available in Home Assistant (e.g. create a user named `user`)          |
-| `--mqtt-password` (Required)  | -               | The password of the user (e.g. use `password`, because it's secure and easy to remember) |
-| `--mqtt-discovery` (Optional) | `homeassistant` | The discovery prefix for MQTT (`homeassistant` works with default setups)                |
-
-When you start the application with the MQTT arguments, the Home Assistant auto-discovery feature will automatically add controls and sensors that can be used for further integration.
-You can find them under **Settings** -> **Devices and Services** -> **Devices** by searching for **TouchKio**.
-
-For example:
-```bash
-touchkio --web-url=http://192.168.1.42:8123 --mqtt-url=mqtt://192.168.1.42:1883 --mqtt-user=user --mqtt-password=password
-```
-
-## User Interface
-TouchKio provides a simple webview window designed specifically for Touch Displays. Electron apps are known to be resource intensive due to their architecture and the inclusion of a full web browser environment. If you just run the kiosk application without other heavy loads, everything should run smoothly.
-
-### Touch Controls
-Additional controls can be found along the right edge of the kiosk application. For more details, you may want to have a closer look here:
-| Name         | Description                                              |
-| ------------ | -------------------------------------------------------- |
-| `Widget`     | [See #16](https://github.com/leukipp/touchkio/issues/16) |
-| `Pager`      | [See #64](https://github.com/leukipp/touchkio/issues/64) |
-| `Navigation` | [See #45](https://github.com/leukipp/touchkio/issues/45) |
-
-### Keyboard Shortcuts
-The application also supports basic shortcuts to enhance navigation and usability for users who prefer or require non-touch input methods:
-| Name                        | Description                  |
-| --------------------------- | ---------------------------- |
-| `Control+Left`              | Navigate to previous page    |
-| `Control+Right`             | Navigate to next page        |
-| `Control+Num_Subtract`      | Decrease the page zoom       |
-| `Control+Num_Add`           | Increase the page zoom       |
-| `Alt+Left`/`Mouse+Back`     | Navigate backward in history |
-| `Alt+Right`/`Mouse+Forward` | Navigate forward in history  |
-
-## Development
-To create your own local build, you first need to install [Node.js](https://pimylifeup.com/raspberry-pi-nodejs) and [Yarn](https://classic.yarnpkg.com/lang/en/docs/install).
-
-Clone this repository and run `yarn install` to install the dependencies.
-Then use `yarn start` to execute the start script located in the [package.json](https://github.com/leukipp/touchkio/blob/main/package.json) file.
-There you may want to adjust the `--web-url` and other arguments for development runs.
-
-If you access your device over SSH, make sure to export the display variables so the kiosk application can launch in the desktop environment.
-```bash
-export DISPLAY=":0"
-export WAYLAND_DISPLAY="wayland-0"
-```
-To make this permanent, consider adding the export variables into the `~/.bashrc` file.
-
-### Flags
-
-<details><summary>Warranty void if opened.</summary><div></br>
-
-These flags are primarily meant for development and debugging, but may also come in handy for some special use cases.
-They can be added into `Arguments.json`, but may change in future versions.
-
-| Name            | Default      | Description                                                                |
-| --------------- | ------------ | -------------------------------------------------------------------------- |
-| `--app-kiosk`   | `fullscreen` | Initial window status (`framed`, `fullscreen`, `maximized` or `minimized`) |
-| `--app-reset`   | -            | Reset stored data (`session` or `arguments`)                               |
-| `--app-disable` | -            | List of disabled features (`web_*` or `mqtt_*`)                            |
-| `--app-early`   | -            | Include pre-release versions for app updates                               |
-| `--app-debug`   | -            | Opens dev tools and raises the log level                                   |
-
-For example:
-```bash
-touchkio --web-url=http://192.168.1.42:8123 --app-kiosk=framed --app-disable=mqtt_screenshot,web_touch
-```
-
-In the `~/.config/touchkio/Arguments.json` file:
-```json
-{
-  "app_kiosk":"framed",
-  "app_disable": [
-    "mqtt_screenshot",
-    "web_touch"
-  ]
-}
-```
-
-</div></details>
-
-### Extensions
-
-<details><summary>You probably won't need this.</summary><div></br>
-
-Incorporating custom extensions and external hardware (like motion sensors, ultrasonic sensors, cameras, relays and switches) via **Raspberry Pi's GPIO/USB** involves several steps.
-While using external sensors that directly integrate with Home Assistant and by utilizing automation's to interact with **TouchKio via MQTT** is generally easier and **recommended**, here's a rough guide on how to proceed with custom hardware integration:
-
-1. **Install Node.js library**: Use Yarn to add a library that can interact with your hardware (GPIO, USB, etc.):
-    ```bash
-    yarn add [package-name]
-    ```
-    This will update the `package.json` file with the required dependencies.
-
-2. **Import the library**: Open the `hardware.js` file and import the library using:
-    ```javascript
-    const package = require("[package-name]");
-    ```
-    Then implement your custom methods and logic to handle the hardware. Don't forget to export the methods at the end of the file:
-    ```javascript
-    module.exports = { ... };
-    ```
-
-3. **Expose sensors via MQTT**: If you want to publish sensor data through MQTT, implement some init and update methods in the `integration.js` file:
-    ```javascript
-    const initCustomSensor = (client) => { ... }
-    const updateCustomSensor = (client) => { ... }
-    ```
-    To get started have a look at the existing methods. Don't forget to call the custom sensor initialization method inside the global init method, where the MQTT connection is established:
-    ```javascript
-    const init = async (args) => { ... }
-    ```
-    From there, you will need to further refine your code by tinkering with sensor updates. This can be achieved through either periodic update calls or event based triggers.
-
-</div></details>
-
-### The nitty gritty
-
-<details><summary>Don't waste your time reading this.</summary><div></br>
-
-The Raspberry Pi's **built-in on-screen keyboard** named `squeekboard` (it squeaks because some _Rust_ got inside), is specifically designed for Wayland environments and features a **D-Bus interface** that allows applications to show or hide the keyboard as needed.
-The kiosk application interacts with squeekboard via the `D-Bus` object path `/sm/puri/OSK0`, enabling the keyboard to be hidden or shown based on **MQTT** user input or system events.
-
-The Raspberry Pi's **built-in screen blanking** function uses the command `swayidle -w timeout 600 'wlopm --off \*' resume 'wlopm --on \*' &` inside `~/.config/labwc/autostart` to blank the screen after **10 minutes**.
-The `wlopm --off \*` command changes the `/sys/class/backlight/*/bl_power` value to **4**, when setting the value to **0** the screen will turn on again.
-However, `swayidle` still seems to consider the screen to be off and as a result it will not turn off again unless there is some interaction in the meantime.
-
-When using Raspberry Pi OS with `labwc` and `wayvnc`, display power control through `wlopm` will fail while a **VNC client** is actively connected.
-In this state, commands such as `wlopm --off DSI-2` or `wlopm --on DSI-2` return `ERROR: Setting power mode for output 'DSI-2' failed.`
-The issue occurs during an active VNC screen capture session. After disconnecting the VNC client, `wlopm` starts working again without rebooting the device or restarting TouchKio.
-If display power control is automated through Home Assistant, it is recommended to avoid testing or relying on display on/off commands while a VNC session is active, or to verify that the requested display state was actually applied.
-
-When using the MQTT integration, the kiosk application must be able to **detect changes** made on the **device** itself.
-I managed to achieve this for the `/sys/class/backlight/*/brightness` file by implementing a simple `fs.watch(..)` file listener.
-However, I found that it **never triggered** for the `/sys/class/backlight/*/bl_power` or the `/sys/class/drm/*/dpms` file.
-Although the file content changes, none of the filesystem listeners where fired.
-This could be due to `swayidle`/`wlopm` performing write actions at a deeper level that are not detectable by file listeners.
-
-As a result, I went for a **polling solution**, checking the state of the `/sys/class/backlight/*/brightness` and `/sys/class/drm/*/dpms` file **every second** for any changes.
-In case `ddcutil` is installed the file `~/.config/touchkio/Cache/Brightness.vcp` will be written/monitored to support brightness support for HDMI screens.
-While I understand this is not ideal, it's necessary to ensure proper functionality.
-
-The display power status and brightness can be adjusted via the MQTT integration.
-**Support** for changing the power status on **DSI and HDMI** displays is achieved by checking for connected screens in `/sys/class/drm/*/status`.
-Support for changing the brightness of a connected display is implemented by using `sudo tee /sys/class/backlight/*/brightness` or `sudo ddcutil setvcp 10`.
-In cases where no supported backlight device is found, the Home Assistant light entity will only show an on/off switch without brightness control.
-
-Keep in mind that default arguments are stored as plain text in `~/.config/touchkio/Arguments.json`.
-This file also includes the **MQTT user password**, which is somewhat obfuscated/encrypted, but in a way that it could be easily reverse engineered.
-Implementing stronger **security measures** would complicate the setup process and could discourage some users from configuring the application properly.
-When using the kiosk application without initializing the default arguments, you will need to provide them with every command.
-This means that the password may be stored as plain text in various files, such as `touchkio.service`, `~/.bash_history`, etc.
-
-To address the problem where the first **touch** on a **turned-off screen** may trigger a **click event** (which could inadvertently activate Home Assistant actions), a workaround needed to be implemented.
-When the screen **turns on/off**, the timestamps of these events are recorded.
-If a touch event is detected and the **timestamp** of the **last screen-off** is more recent than the **last screen-on** timestamp, the touch event is discarded and the screen is turned on instead.
-From that point onward, subsequent touch interactions will function normally as expected.
-
-Additionally, to address the problem that scrolling only works with the **web browser scrollbar** on the right, the application is configured to **simulate a touch device** using `Emulation.setEmitTouchEventsForMouse`.
-This adjustment provides a user experience similar to that of a proper mobile device.
-
-</div></details>
-
-## Issues
-> [!NOTE]
-> ### Please read the hardware [FAQ](https://github.com/leukipp/touchkio/blob/main/HARDWARE.md#faq) section first if you encounter any issues.
-
-For basic debugging **(TouchKio)**, stop the service and launch `touchkio` directly on the terminal to monitor the log output in real-time.
-This output is also written into `~/.config/touchkio/logs/main.log` for review.
-
-For extended logging **(Electron)** you can run `touchkio --enable-logging`, which will write an additional log file into `~/.config/touchkio/logs/electron.log`.
-Refer to the [--log-level=[0-3]](https://www.electronjs.org/docs/latest/api/command-line-switches#--log-leveln) and [--v=[0-3]](https://www.electronjs.org/docs/latest/api/command-line-switches#--vlog_level) options to adjust the logging verbosity.
-
-If you need to debug the webview **(Chrome DevTools)** use `touchkio --app-debug`.
-
-In case [undocumented problems](https://github.com/leukipp/touchkio/blob/main/HARDWARE.md#faq) arise, please [create an issue](https://github.com/leukipp/touchkio/issues) and include the output of `touchkio --version`, additional information about your system (such as operating system, hardware, etc.), and any relevant log files.
+For upstream Linux, Raspberry Pi and Debian setup guidance, consult the [TouchKio project](https://github.com/leukipp/touchkio); this README does not reproduce those instructions. The normal source-run workflow uses `npm start`; availability of inherited hardware and MQTT features varies by platform and setup.
 
 ## Credits
-[Inspired by](https://www.jeffgeerling.com/blog/2024/home-assistant-and-carplay-pi-touch-display-2) the one and only Raspberry Pi Master, Jeff Geerling ([@geerlingguy](https://github.com/geerlingguy)).
 
-Thanks to Sebastian ([@pdsccode](https://github.com/pdsccode)) for his contributions on issues and [community](https://community.home-assistant.io/t/kiosk-mode-for-raspberry-pi-with-touch-display/821196) discussions.
-
-### Tutorials
-If you are looking for hardware or a well-designed mounting solution for the Raspberry Pi Display, check out the [blog post](https://www.thestockpot.net/videos/home-assistant-wall-display) from Dillan Stock ([@TheStockPot-AU](https://www.youtube.com/@TheStockPot-AU)):
-
-<a href="https://www.youtube.com/watch?v=uTxURzmrVtA">
-  <img src="https://img.youtube.com/vi/uTxURzmrVtA/maxresdefault.jpg" alt="What My Smart Home Was Missing" title="@TheStockPot-AU" style="width:100%">
-</a>
-
-Also, have a look at this curated collection of helpful videos contributed by the community:
-
-<p align="center" style="width:100%">
-  <a href="https://www.youtube.com/watch?v=_adl1fiXlgk">
-    <img src="https://img.youtube.com/vi/_adl1fiXlgk/mqdefault.jpg" alt="Building a Home Assistant Kiosk - Why Did I Wait So Long?" title="@Jims-Garage" style="width:32%">
-  </a>
-  <a href="https://www.youtube.com/watch?v=uXcjx-zL_UU">
-    <img src="https://img.youtube.com/vi/uXcjx-zL_UU/mqdefault.jpg" alt="Touch Display for Home Assistant with TouchKIO" title="@haus_automation" style="width:32%">
-  </a>
-  <a href="https://www.youtube.com/watch?v=t2YQm7GPmpY">
-    <img src="https://img.youtube.com/vi/t2YQm7GPmpY/mqdefault.jpg" alt="DIY Home Assistant Kiosk Build: Raspberry Pi & 3D Printing Livestream" title="@homeautomatorza" style="width:32%">
-  </a>
-</p>
+HA View is based on [TouchKio](https://github.com/leukipp/touchkio) by leukipp, released under the MIT license. Thank you to the TouchKio project for the foundation HA View builds on.
 
 ## License
-[MIT](https://github.com/leukipp/touchkio/blob/main/LICENSE)
+
+HA View is released under the MIT License. See [LICENSE](LICENSE) for the full license text, including Copyright (c) 2024 leukipp and Copyright (c) 2026 HA.View contributors.

@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'">
+<title>HA View startup</title><style>
+body{font:16px system-ui;margin:18px;background:#17212e;color:#f5f7fa}h1{font-size:25px}p{line-height:1.5}button{padding:10px 14px;margin:4px 6px 4px 0;font:inherit;cursor:pointer}#status{min-height:3em}button:disabled{cursor:default}button:focus-visible{outline:3px solid #85cfff}
+</style></head><body><h1>Connect to Home Assistant</h1>
+<p id="status" role="status" aria-live="polite">Checking Home Assistant…</p>
+<p>Wait tries again every 30 seconds. Log in again lets you change the address without signing you out.</p>
+<button id="wait" data-action="wait">Wait</button><button id="cancel" data-action="cancel" hidden>Cancel wait</button>
+<button data-action="login">Log in again</button><button data-action="close">Close until next restart</button>
+<script src="startup-recovery-renderer.js"></script></body></html>

@@ -1,17 +1,31 @@
 <!doctype html>
-<html>
+<html lang="en" data-theme="dark">
   <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HA View dashboard navigation</title>
     <meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline'" />
     <style>
+      :root,
       [data-theme="dark"] {
-        --primary-color: rgba(225, 225, 225, 1);
-        --border-color: rgba(225, 225, 225, 0.15);
-        --background-color: rgba(28, 28, 28, 1);
+        color-scheme: dark;
+        --primary-color: rgba(248, 248, 250, 0.88);
+        --muted-color: rgba(248, 248, 250, 0.58);
+        --border-color: rgba(255, 255, 255, 0.11);
+        --control-hover: rgba(255, 255, 255, 0.09);
+        --field-color: rgba(255, 255, 255, 0.07);
+        --background-color: rgba(20, 21, 24, 0.96);
+        --accent-color: rgba(103, 176, 255, 1);
       }
       [data-theme="light"] {
-        --primary-color: rgba(33, 33, 33, 1);
-        --border-color: rgba(33, 33, 33, 0.15);
-        --background-color: rgba(255, 255, 255, 1);
+        color-scheme: light;
+        --primary-color: rgba(28, 29, 32, 0.88);
+        --muted-color: rgba(28, 29, 32, 0.56);
+        --border-color: rgba(28, 29, 32, 0.1);
+        --control-hover: rgba(0, 0, 0, 0.06);
+        --field-color: rgba(0, 0, 0, 0.045);
+        --background-color: rgba(249, 249, 247, 0.96);
+        --accent-color: rgba(0, 105, 218, 1);
       }
       ::-webkit-scrollbar {
         display: none;
@@ -19,7 +33,13 @@
       * {
         margin: 0;
         padding: 0;
-        cursor: pointer;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        -webkit-font-smoothing: antialiased;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--primary-color);
       }
       html {
         width: 100%;
@@ -38,7 +58,9 @@
         width: 100vw;
         height: 100vh;
         padding: 0 10px;
-        column-gap: 10px;
+        column-gap: 6px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
         list-style-type: none;
         border-top: 1px solid var(--border-color);
         background: var(--background-color);
@@ -49,11 +71,13 @@
         flex: 0 0 auto;
       }
       li.dynamic {
-        flex: 1 1 0%;
+        flex: 1 0 160px;
+        min-width: 160px;
       }
       li.separator {
-        height: 32px;
-        border: 1px solid var(--border-color);
+        height: 20px;
+        margin: 0 2px;
+        border-left: 1px solid var(--border-color);
       }
       li.separator:has(+ li.hidden) {
         display: none;
@@ -67,37 +91,85 @@
         pointer-events: none;
       }
       button {
-        width: 32px;
-        height: 32px;
-        border: none;
-        background-color: transparent;
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: min(44px, calc(100vh - 6px));
+        cursor: pointer;
+        touch-action: manipulation;
+        border: 0;
+        border-radius: 16px;
+        background: transparent;
+        transition:
+          background-color 160ms ease,
+          transform 160ms ease;
+      }
+      @media (hover: hover) {
+        button:hover:not(:disabled) {
+          background-color: var(--control-hover);
+        }
+      }
+      button:active:not(:disabled) {
+        background-color: var(--control-hover);
+      }
+      button:focus-visible {
+        outline: 2px solid var(--accent-color);
+        outline-offset: -2px;
       }
       input {
         width: 100%;
         min-width: 0;
-        margin: 0 5px;
-        padding: 6px 10px;
-        border-radius: 4px;
-        font-size: 18px;
-        font-family: sans-serif;
+        height: min(40px, calc(100vh - 6px));
+        margin: 0;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 15px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         outline: none;
-        border: none;
+        border: 1px solid transparent;
         cursor: text;
         box-sizing: border-box;
         color: var(--primary-color);
-        background-color: var(--border-color);
+        background-color: var(--field-color);
+        transition:
+          border-color 160ms ease,
+          background-color 160ms ease;
+      }
+      input:focus {
+        border-color: var(--accent-color);
+        background-color: var(--control-hover);
       }
       svg {
+        width: 22px;
+        height: 22px;
         pointer-events: none;
-        fill: var(--primary-color);
+        fill: var(--muted-color);
+      }
+      @media (max-width: 720px) {
+        menu {
+          padding-inline: 6px;
+          column-gap: 2px;
+        }
+        li.separator {
+          display: none;
+        }
+        button {
+          width: 44px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        button,
+        input {
+          transition: none;
+        }
       }
     </style>
   </head>
   <body>
-    <menu>
+    <menu aria-label="Dashboard navigation">
       <li>
-        <button id="home">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <button id="home" type="button" aria-label="Go to home dashboard" title="Go to home dashboard">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>home-circle</title>
             <path
               d="M19.07,4.93C17.22,3 14.66,1.96 12,2C9.34,1.96 6.79,3 4.94,4.93C3,6.78 1.96,9.34 2,12C1.96,14.66 3,17.21 4.93,19.06C6.78,21 9.34,22.04 12,22C14.66,22.04 17.21,21 19.06,19.07C21,17.22 22.04,14.66 22,12C22.04,9.34 21,6.78 19.07,4.93M17,12V18H13.5V13H10.5V18H7V12H5L12,5L19.5,12H17Z"
@@ -106,8 +178,8 @@
         </button>
       </li>
       <li>
-        <button id="refresh">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <button id="refresh" type="button" aria-label="Reload dashboard" title="Reload dashboard">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>refresh-circle</title>
             <path
               d="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2M18 11H13L14.81 9.19A3.94 3.94 0 0 0 12 8A4 4 0 1 0 15.86 13H17.91A6 6 0 1 1 12 6A5.91 5.91 0 0 1 16.22 7.78L18 6Z"
@@ -117,8 +189,8 @@
       </li>
       <li class="separator"></li>
       <li>
-        <button id="previous">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <button id="previous" type="button" aria-label="Previous dashboard" title="Previous dashboard">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>page-previous</title>
             <path
               d="M4,21H19A2,2 0 0,0 21,19V13H17V15L13,12L17,9V11H21V5A2,2 0 0,0 19,3H4A2,2 0 0,0 2,5V19A2,2 0 0,0 4,21M4,15H8V17H4V15M4,11H11V13H4V11M4,7H11V9H4V7M21,11H24V13H21V11Z"
@@ -127,8 +199,8 @@
         </button>
       </li>
       <li>
-        <button id="next">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <button id="next" type="button" aria-label="Next dashboard" title="Next dashboard">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>page-next</title>
             <path
               d="M20,3H5A2,2 0 0,0 3,5V11H7V9L11,12L7,15V13H3V19A2,2 0 0,0 5,21H20A2,2 0 0,0 22,19V5A2,2 0 0,0 20,3M17,17H13V15H17V17M20,13H13V11H20V13M20,9H13V7H20V9M3,13H0V11H3V13Z"
@@ -138,12 +210,12 @@
       </li>
       <li class="separator"></li>
       <li class="dynamic">
-        <input id="url" type="text" spellcheck="false" readonly="true" />
+        <input aria-label="Dashboard address" id="url" type="text" spellcheck="false" readonly="true" />
       </li>
       <li class="separator"></li>
       <li>
-        <button id="backward">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <button id="backward" type="button" aria-label="Back in dashboard history" title="Back in dashboard history">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>history</title>
             <path
               d="M13.5,8H12V13L16.28,15.54L17,14.33L13.5,12.25V8M13,3A9,9 0 0,0 4,12H1L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3"
@@ -152,8 +224,13 @@
         </button>
       </li>
       <li>
-        <button id="forward">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <button
+          id="forward"
+          type="button"
+          aria-label="Forward in dashboard history"
+          title="Forward in dashboard history"
+        >
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>update</title>
             <path
               d="M21,10.12H14.22L16.96,7.3C14.23,4.6 9.81,4.5 7.08,7.2C4.35,9.91 4.35,14.28 7.08,17C9.81,19.7 14.23,19.7 16.96,17C18.32,15.65 19,14.08 19,12.1H21C21,14.08 20.12,16.65 18.36,18.39C14.85,21.87 9.15,21.87 5.64,18.39C2.14,14.92 2.11,9.28 5.62,5.81C9.13,2.34 14.76,2.34 18.27,5.81L21,3V10.12M12.5,8V12.25L16,14.33L15.28,15.54L11,13V8H12.5Z"
@@ -163,8 +240,8 @@
       </li>
       <li class="separator"></li>
       <li>
-        <button id="minus">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <button id="minus" type="button" aria-label="Zoom out" title="Zoom out">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>magnify-minus</title>
             <path
               d="M9,2A7,7 0 0,1 16,9C16,10.57 15.5,12 14.61,13.19L15.41,14H16L22,20L20,22L14,16V15.41L13.19,14.61C12,15.5 10.57,16 9,16A7,7 0 0,1 2,9A7,7 0 0,1 9,2M5,8V10H13V8H5Z"
@@ -173,13 +250,30 @@
         </button>
       </li>
       <li>
-        <button id="plus">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <button id="plus" type="button" aria-label="Zoom in" title="Zoom in">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>magnify-plus</title>
             <path
               d="M9,2A7,7 0 0,1 16,9C16,10.57 15.5,12 14.61,13.19L15.41,14H16L22,20L20,22L14,16V15.41L13.19,14.61C12,15.5 10.57,16 9,16A7,7 0 0,1 2,9A7,7 0 0,1 9,2M8,5V8H5V10H8V13H10V10H13V8H10V5H8Z"
             />
           </svg>
+        </button>
+      </li>
+      <li>
+        <button id="camera-dashboard" type="button" aria-label="Camera dashboard settings" title="Camera dashboard settings">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M4 5h10a2 2 0 0 1 2 2v2l5-3v12l-5-3v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm0 2v10h10V7H4Zm14 5 1 1v-2l-1 1Z" />
+          </svg>
+        </button>
+      </li>
+      <li>
+        <button id="dashboard-layout-help" type="button" aria-label="Dashboard layout help" title="Dashboard layout help">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 3h18v18H3V3m2 2v5h14V5H5m0 7v7h6v-7H5m8 0v7h6v-7h-6Z" /></svg>
+        </button>
+      </li>
+      <li>
+        <button id="native-management" type="button" aria-label="Native smart-home management access" title="Native smart-home management access">
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3 2 12h3v9h6v-6h2v6h6v-9h3L12 3Zm0 3 5 5v8h-2v-6H9v6H7v-8l5-5Z" /></svg>
         </button>
       </li>
     </menu>
@@ -189,7 +283,7 @@
       const registerSendEvents = () => {
         document.querySelectorAll("button").forEach((button) => {
           button.addEventListener("click", (e) => {
-            ipcRenderer.send("button-click", { id: e.target.id });
+            ipcRenderer.send("button-click", { id: e.currentTarget.id });
           });
         });
         document.querySelectorAll("input").forEach((input) => {
@@ -209,7 +303,9 @@
 
       const registerReceiveEvents = () => {
         ipcRenderer.on("button-disabled", (e, button) => {
-          document.getElementById(button.id).parentNode.classList.toggle("disabled", button.disabled);
+          const control = document.getElementById(button.id);
+          control.disabled = button.disabled;
+          control.parentNode.classList.toggle("disabled", button.disabled);
         });
         ipcRenderer.on("button-hidden", (e, button) => {
           document.getElementById(button.id).parentNode.classList.toggle("hidden", button.hidden);

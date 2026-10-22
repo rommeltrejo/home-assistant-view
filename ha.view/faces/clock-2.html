@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <title>HA View Clock Face 1</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        background: #000;
+        color: #fff;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        min-width: 0;
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+      }
+
+      body {
+        height: 100vh;
+        height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: max(16px, env(safe-area-inset-top))
+          max(16px, env(safe-area-inset-right))
+          max(16px, env(safe-area-inset-bottom))
+          max(16px, env(safe-area-inset-left));
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      main {
+        display: grid;
+        justify-items: center;
+        gap: clamp(12px, 2.4vh, 20px);
+        width: 100%;
+        text-align: center;
+      }
+
+      .dial {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: min(80vmin, 620px, 72dvh);
+        aspect-ratio: 1;
+      }
+
+      .ticks {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      .tick {
+        stroke: #8b510c;
+        stroke-width: 0.8;
+        stroke-linecap: round;
+        opacity: 0.58;
+      }
+
+      .tick.major {
+        stroke: #c27a1c;
+        stroke-width: 1.25;
+        opacity: 0.8;
+      }
+
+      .tick.elapsed {
+        stroke: #ffad32;
+        opacity: 1;
+      }
+
+      .progress-arc {
+        fill: none;
+        stroke-width: 0.6;
+        stroke: #d98216;
+        stroke-linecap: round;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+        stroke-dasharray: 289.03;
+        stroke-dashoffset: 289.03;
+      }
+
+      .readout {
+        display: grid;
+        justify-items: center;
+        gap: clamp(8px, 1.7vh, 14px);
+        width: 72%;
+      }
+
+      #time {
+        display: block;
+        max-width: 100%;
+        color: #f7f7f7;
+        font-size: clamp(42px, 15vmin, 112px);
+        font-weight: 650;
+        line-height: 1;
+        letter-spacing: -0.055em;
+        font-variant-numeric: tabular-nums lining-nums;
+        white-space: nowrap;
+      }
+
+      #date {
+        margin: 0;
+        color: #a7a7a7;
+        font-size: clamp(12px, 2.1vmin, 17px);
+        font-weight: 400;
+        line-height: 1.35;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      @media (max-width: 520px) {
+        .dial {
+          width: min(82vw, 56dvh, 420px);
+        }
+
+        .readout {
+          width: 78%;
+        }
+
+        #time {
+          font-size: clamp(42px, 15vw, 76px);
+        }
+      }
+
+      @media (max-height: 380px) {
+        .dial {
+          width: min(72vh, 48vw, 310px);
+        }
+
+        main {
+          gap: 8px;
+        }
+
+        .readout {
+          gap: 6px;
+        }
+
+        #time {
+          font-size: clamp(38px, 13vmin, 64px);
+        }
+
+        #date {
+          font-size: 11px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main aria-label="Clock face">
+      <div class="dial">
+        <svg class="ticks" viewBox="0 0 100 100" focusable="false" aria-hidden="true">
+          <circle class="progress-arc" id="progress" cx="50" cy="50" r="46" />
+          <g id="tick-ring"></g>
+        </svg>
+        <div class="readout">
+          <time id="time" aria-label="Current local time" aria-live="off"></time>
+          <p id="date" aria-label="Current local date"></p>
+        </div>
+      </div>
+    </main>
+    <script>
+      (() => {
+        const namespace = "http://www.w3.org/2000/svg";
+        const tickRing = document.querySelector("#tick-ring");
+        const progressArc = document.querySelector("#progress");
+        const time = document.querySelector("#time");
+        const date = document.querySelector("#date");
+        const locale = navigator.language || document.documentElement.lang || undefined;
+        const timeFormatter = new Intl.DateTimeFormat(locale, {
+          hour: "2-digit",
+          minute: "2-digit",
+          hourCycle: "h23",
+          numberingSystem: "latn",
+        });
+        const dateFormatter = new Intl.DateTimeFormat(locale, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+        const ticks = [];
+
+        for (let index = 0; index < 60; index += 1) {
+          const angle = (index * 6 - 90) * Math.PI / 180;
+          const major = index % 5 === 0;
+          const innerRadius = major ? 40 : 41.5;
+          const outerRadius = 44;
+          const line = document.createElementNS(namespace, "line");
+          line.setAttribute("x1", String(50 + Math.cos(angle) * innerRadius));
+          line.setAttribute("y1", String(50 + Math.sin(angle) * innerRadius));
+          line.setAttribute("x2", String(50 + Math.cos(angle) * outerRadius));
+          line.setAttribute("y2", String(50 + Math.sin(angle) * outerRadius));
+          line.setAttribute("class", `tick${major ? " major" : ""}`);
+          tickRing.append(line);
+          ticks.push(line);
+        }
+
+        const update = () => {
+          const now = new Date();
+          const parts = timeFormatter.formatToParts(now);
+          const hour = parts.find((part) => part.type === "hour")?.value || "00";
+          const minute = parts.find((part) => part.type === "minute")?.value || "00";
+          time.dateTime = now.toISOString();
+          time.textContent = `${hour}:${minute}`;
+          time.setAttribute("aria-label", timeFormatter.format(now));
+          date.textContent = dateFormatter.format(now);
+
+          const elapsedSeconds = now.getSeconds();
+          const circumference = 289.03;
+          progressArc.style.strokeDashoffset = String(circumference * (1 - elapsedSeconds / 60));
+          ticks.forEach((tick, index) => {
+            tick.classList.toggle("elapsed", index < elapsedSeconds);
+          });
+        };
+
+        const scheduleNextSecond = () => {
+          update();
+          window.setTimeout(scheduleNextSecond, 1000 - (Date.now() % 1000) + 15);
+        };
+
+        document.addEventListener("visibilitychange", () => {
+          if (!document.hidden) update();
+        });
+        window.addEventListener("pageshow", update);
+        scheduleNextSecond();
+      })();
+    </script>
+  </body>
+</html>

@@ -4,11 +4,14 @@ const crypto = require("crypto");
 const readline = require("readline/promises");
 const integration = require("./js/integration");
 const hardware = require("./js/hardware");
+require("./ha.view/linux-display").install(hardware);
 const webview = require("./js/webview");
 const log = require("electron-log");
 const { app, powerMonitor } = require("electron");
 const Bonjour = require("bonjour-service");
 const Events = require("events");
+const { createIdentity, applyIdentityPolicy } = require("./ha.view/identity");
+const { quitStatus } = require("./ha.view/quit-status");
 
 global.APP = global.APP || {};
 global.ARGS = global.ARGS || {};
@@ -42,7 +45,9 @@ app.whenReady().then(async () => {
   ];
   for (const [name, init] of chained) {
     console.debug(`${name}: init()`);
-    if (!(await init())) {
+    const initialized = await init();
+    if (name === "webview.js" && initialized) require("./ha.view/startup-recovery").dashboardReady();
+    if (!initialized) {
       console.debug(`${name}: init() --> aborted`);
       break;
     }
@@ -67,21 +72,14 @@ const initApp = async () => {
   APP.title = packageJson.title;
   APP.version = app.getVersion();
   APP.path = app.getAppPath();
-  APP.icon = path.join(app.getAppPath(), "img", "icon.png");
+  // HA.View has no approved app artwork yet; retain Electron's source-run default.
+  // img/icon.png remains upstream packaging artwork, not HA.View runtime identity.
   APP.log = path.join(app.getPath("logs"), "main.log");
   APP.cache = path.join(app.getPath("userData"), "Cache");
   APP.config = app.getPath("userData");
 
-  // Set additional update infos
-  APP.homepage = `https://github.com/${packageJson.author}/${packageJson.name}`;
-  APP.releases = {
-    url: `https://api.github.com/repos/${packageJson.author}/${packageJson.name}/releases`,
-    latest: null,
-  };
-  APP.issues = `https://github.com/${packageJson.author}/${packageJson.name}/issues`;
-  APP.scripts = {
-    install: `https://raw.githubusercontent.com/${packageJson.author}/${packageJson.name}/main/install.sh`,
-  };
+  // HA.View project links are optional; upstream credit is separate metadata.
+  Object.assign(APP, createIdentity(packageJson));
 
   // Set additional build infos
   APP.build = {};
@@ -101,7 +99,7 @@ const initApp = async () => {
   });
   app.on("will-quit", (e) => {
     e.preventDefault();
-    process.exitCode = process.exitCode !== 0 ? 1 : 0;
+    process.exitCode = quitStatus(process.exitCode);
     const level = process.exitCode === 0 ? "warn" : "error";
     console[level](`${APP.title} Terminated (${process.exitCode})`);
     app.exit(process.exitCode);
@@ -109,11 +107,11 @@ const initApp = async () => {
 
   // Register process exit events
   ["SIGINT", "SIGTERM", "SIGQUIT", "exit"].forEach((signal) => {
-    process.on(signal, () => {
+    process.on(signal, (code) => {
       if (APP.exiting) {
         return;
       }
-      process.exitCode = 0;
+      process.exitCode = quitStatus(process.exitCode ?? (signal === "exit" ? code : undefined));
       APP.exiting = true;
       app.quit();
     });
@@ -122,7 +120,7 @@ const initApp = async () => {
     if (APP.exiting) {
       return;
     }
-    process.exitCode = 0;
+    process.exitCode = quitStatus(process.exitCode);
     APP.exiting = true;
     app.quit();
   });
@@ -136,11 +134,11 @@ const initApp = async () => {
  * @returns {Promise<boolean>} True if the initialization was successful.
  */
 const initArgs = async () => {
-  let args = parseArgs(process);
-  let argsProvided = !!Object.keys(args).length;
+  const startupSettings = require("./ha.view/startup-settings");
+  const cli = parseArgs(process);
+  let args = startupSettings.merge({}, cli);
 
   let argsFilePath = path.join(APP.config, "Arguments.json");
-  let argsFileExists = fs.existsSync(argsFilePath);
 
   let argsFileHashPath = path.join(APP.cache, "Arguments.hash");
   let argsFileHashExists = fs.existsSync(argsFileHashPath);
@@ -151,25 +149,67 @@ const initArgs = async () => {
     if (APP.build.id) {
       build = ` (${APP.build.id}), built on ${APP.build.date} (${APP.build.platform}-${APP.build.arch}-${APP.build.maker})`;
     }
-    console.info(`${APP.name}-v${APP.version}${build}\n${APP.homepage}`);
+    console.info(`${APP.name}-v${APP.version}${build}${APP.homepage ? `\n${APP.homepage}` : ""}`);
     return app.exit(0);
   }
 
-  // Setup arguments from file path
-  if ((!argsProvided && !argsFileExists) || "setup" in args) {
-    const defaults = { ip: (await discover(3000)) || "192.168.1.42" };
-    do {
-      args = await promptArgs(process, defaults);
-    } while (!Object.keys(args).length);
-    writeArgs(argsFilePath, args);
-  } else if (argsFileExists) {
-    args = { ...readArgs(argsFilePath), ...args };
+  // HA.View: a blank first launch opens native settings before any dashboard initialization.
+  const firstLaunch = require("./ha.view/initial-settings");
+  const state = firstLaunch.inspect(argsFilePath);
+  const startup = firstLaunch.decision(state, args, app.isPackaged, !!process.stdin.isTTY);
+  if (startup === "error") {
+    require("electron").dialog.showErrorBox("HA View configuration error", `${state.message}\n\nThe file was not changed.`);
+    process.exitCode = 1;
+    app.quit();
+    return false;
   }
+  let prior = state;
+  try {
+    if (startup === "native") {
+      const saved = await require("./ha.view/installer-startup").openInitialSettings(argsFilePath, state);
+      if (!saved) { process.exitCode = 0; app.quit(); return false; }
+      prior = firstLaunch.inspect(argsFilePath);
+      if (JSON.stringify(prior.value) !== JSON.stringify(saved)) {
+        throw new Error("Arguments.json changed after native settings. Nothing was overwritten.");
+      }
+      args = startupSettings.merge(readArgs(argsFilePath, prior), cli);
+    } else if (startup === "terminal") {
+      const defaults = { ip: (await discover(3000)) || "homeassistant.local" };
+      do {
+        args = await promptArgs(process, defaults);
+      } while (!Object.keys(args).length);
+      args = startupSettings.merge(readArgs(argsFilePath, state), { ...args, ...cli });
+    } else {
+      args = startupSettings.merge(readArgs(argsFilePath, state), cli);
+    }
 
-  // Check arguments object
-  if (!Object.keys(args).length) {
-    console.error(`No arguments provided`);
-    return app.exit(1);
+    // Check arguments object
+    if (!Object.keys(args).length) {
+      console.error(`No arguments provided`);
+      return app.exit(1);
+    }
+
+    // Validate non-URL settings first; invalid URLs belong to the visible recovery gate.
+    if (prior.value) startupSettings.validate({ ...prior.value, web_url: "http://localhost/" });
+    startupSettings.validate({ ...args, web_url: "http://localhost/" });
+    const recovered = await require("./ha.view/startup-recovery").ensureReachable(args, argsFilePath);
+    if (!recovered) return false;
+    // Only URL correction changed the file; otherwise retain the original concurrency guard.
+    if (JSON.stringify(args.web_url) !== JSON.stringify(recovered.web_url)) prior = firstLaunch.inspect(argsFilePath);
+    args = recovered;
+
+    // Validate before writing. Preserve existing ciphertext rather than re-encrypting it on every launch.
+    const durable = startupSettings.meaningful(args);
+    if (prior.value && !Object.hasOwn(startupSettings.meaningful(cli), "mqtt_password") && startup !== "terminal") {
+      delete durable.mqtt_password;
+    }
+    startupSettings.validate(args);
+    startupSettings.persist(argsFilePath, { ...durable, web_url: args.web_url }, prior, encrypt);
+  } catch (error) {
+    require("electron").dialog.showErrorBox("HA View configuration error", `${error.message}\n\nThe file was not changed.`);
+    process.exitCode = 1;
+    app.quit();
+    return false;
   }
 
   // Split arguments parameter
@@ -186,8 +226,11 @@ const initArgs = async () => {
     args.app_reset = args.app_reset.split(",").map((reset) => reset.trim());
   }
 
+  // Disable upstream installer registration when HA.View has no install target.
+  applyIdentityPolicy(APP, args);
+
   // Calculate arguments hash
-  const argsFileHash = crypto.createHash("sha256").update(JSON.stringify(args)).digest("hex");
+  const argsFileHash = crypto.createHash("sha256").update(JSON.stringify(startupSettings.meaningful(args))).digest("hex");
   const argsUpdated = argsFileHashExists && argsFileHash !== fs.readFileSync(argsFileHashPath, "utf8");
   if (argsUpdated && !args.app_reset.includes("arguments")) {
     args.app_reset.push("arguments");
@@ -228,6 +271,7 @@ const initLog = async () => {
   log.errorHandler.startCatching({
     showDialog: false,
     onError({ error, versions }) {
+      process.exitCode = quitStatus(process.exitCode) || 1;
       if (!error?.message?.includes("Object has been destroyed")) {
         const build = { ...APP.build, ...versions };
         console.error(`💥 Whoopsie! -`, error, build);
@@ -431,33 +475,18 @@ const promptArgs = async (proc, defaults) => {
 };
 
 /**
- * Writes argument values to the filesystem.
- *
- * @param {string} file - Path of the .json file.
- * @param {Object} args - The arguments object.
- * @returns {void}
- */
-const writeArgs = (file, args) => {
-  try {
-    if (fs.existsSync(path.dirname(file))) {
-      const argc = Object.assign({}, args);
-      if ("mqtt_password" in argc) {
-        argc.mqtt_password = encrypt(argc.mqtt_password);
-      }
-      fs.writeFileSync(file, JSON.stringify(argc, null, 2));
-    }
-  } catch (error) {
-    console.error(`Failed to write ${file}:`, error.message);
-  }
-};
-
-/**
  * Reads argument values from the filesystem.
  *
  * @param {string} file - Path of the .json file.
  * @returns {Object} The arguments object.
  */
-const readArgs = (file) => {
+const readArgs = (file, snapshot) => {
+  if (snapshot) {
+    if (snapshot.kind === "error") throw new Error(snapshot.message);
+    const args = { ...(snapshot.value || {}) };
+    if ("mqtt_password" in args) args.mqtt_password = decrypt(args.mqtt_password);
+    return args;
+  }
   try {
     if (fs.existsSync(file)) {
       const args = JSON.parse(fs.readFileSync(file, "utf8"));
@@ -525,12 +554,12 @@ const sleep = (ms) => {
   console.debug = () => {};
 
   // Check display environment variable
-  if (!process.env.DISPLAY) {
+  if (process.platform === "linux" && !process.env.DISPLAY) {
     console.error(`\n$DISPLAY variable not set to run the GUI application, are you connected via SSH?\n`);
     console.error(`If you have installed the service use:`);
-    console.error(`  systemctl --user start touchkio.service`);
+    console.error(`  systemctl --user start ha.view.service`);
     console.error(`Alternatively export the variables first:`);
-    console.error(`  export DISPLAY=":0" && export WAYLAND_DISPLAY="wayland-0" && touchkio\n`);
+    console.error(`  export DISPLAY=":0" && export WAYLAND_DISPLAY="wayland-0" && ha.view\n`);
     process.exit(1);
   }
 
@@ -544,7 +573,8 @@ const sleep = (ms) => {
   // Append unsafe secure origin switch
   try {
     const args = readArgs(path.join(app.getPath("userData"), "Arguments.json"));
-    const origins = (args.web_url || []).map((url) => new URL(url).origin).filter(Boolean);
+    const urls = Array.isArray(args.web_url) ? args.web_url : typeof args.web_url === "string" ? args.web_url.split(",") : [];
+    const origins = urls.map((url) => new URL(url.trim()).origin).filter(Boolean);
     app.commandLine.appendSwitch("unsafely-treat-insecure-origin-as-secure", origins.join(","));
   } catch {}
 })();
