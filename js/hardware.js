@@ -1080,7 +1080,7 @@ const checkPackageUpgrades = () => {
   if (!commandExists("apt")) {
     return [];
   }
-  const output = execSyncCommand("apt", ["list", "--upgradable", "2>/dev/null"]);
+  const output = execSyncCommand("apt", ["list", "--upgradable"]);
   const packages = (output || "").trim().split("\n");
   packages.shift();
   return packages;
@@ -1127,7 +1127,7 @@ const rebootSystem = (callback = null) => {
  */
 const sudoRights = () => {
   try {
-    cpr.execSync(`sudo -n true`, { encoding: "utf8", stdio: "ignore" });
+    cpr.execFileSync("sudo", ["-n", "true"], { encoding: "utf8", stdio: "ignore" });
     return true;
   } catch {}
   return false;
@@ -1140,7 +1140,7 @@ const sudoRights = () => {
  */
 const installRights = () => {
   try {
-    cpr.execSync(`sudo -n apt install --help`, { encoding: "utf8", stdio: "ignore" });
+    cpr.execFileSync("sudo", ["-n", "apt", "install", "--help"], { encoding: "utf8", stdio: "ignore" });
     return true;
   } catch {}
   return false;
@@ -1153,7 +1153,7 @@ const installRights = () => {
  */
 const rebootRights = () => {
   try {
-    cpr.execSync(`sudo -n reboot --help`, { encoding: "utf8", stdio: "ignore" });
+    cpr.execFileSync("sudo", ["-n", "reboot", "--help"], { encoding: "utf8", stdio: "ignore" });
     return true;
   } catch {}
   return false;
@@ -1166,7 +1166,7 @@ const rebootRights = () => {
  */
 const shutdownRights = () => {
   try {
-    cpr.execSync(`sudo -n shutdown --help`, { encoding: "utf8", stdio: "ignore" });
+    cpr.execFileSync("sudo", ["-n", "shutdown", "--help"], { encoding: "utf8", stdio: "ignore" });
     return true;
   } catch {}
   return false;
@@ -1194,7 +1194,7 @@ const writeRights = (path) => {
  */
 const serviceRuns = (name) => {
   try {
-    cpr.execSync(`systemctl --user is-active ${name}`, { encoding: "utf8", stdio: "ignore" });
+    cpr.execFileSync("systemctl", ["--user", "is-active", name], { encoding: "utf8", stdio: "ignore" });
     return true;
   } catch {}
   return false;
@@ -1208,7 +1208,7 @@ const serviceRuns = (name) => {
  */
 const processRuns = (name) => {
   try {
-    cpr.execSync(`pidof ${name}`, { encoding: "utf8", stdio: "ignore" });
+    cpr.execFileSync("pidof", [name], { encoding: "utf8", stdio: "ignore" });
     return true;
   } catch {}
   return false;
@@ -1222,7 +1222,7 @@ const processRuns = (name) => {
  */
 const commandExists = (name) => {
   try {
-    cpr.execSync(`which ${name}`, { encoding: "utf8", stdio: "ignore" });
+    cpr.execFileSync("which", [name], { encoding: "utf8", stdio: "ignore" });
     return true;
   } catch {}
   return false;
@@ -1238,7 +1238,7 @@ const commandExists = (name) => {
 const execSyncCommand = (cmd, args) => {
   try {
     console.debug(`hardware.js: execSyncCommand(${[cmd, ...args].join(" ")})`);
-    const output = cpr.execSync([cmd, ...args].join(" "), { encoding: "utf8" });
+    const output = cpr.execFileSync(cmd, args, { encoding: "utf8" });
     return output.trim().replace(/\0/g, "");
   } catch (error) {
     console.error(`Execute Sync: '${[cmd, ...args].join(" ")}' --> ${error.message}`.trim());
@@ -1416,11 +1416,10 @@ const dbusMonitor = (path, callback = null) => {
 const dbusCall = (path, method, values, callback = null) => {
   const cmd = "dbus-send";
   const iface = path.slice(1).replace(/\//g, ".");
-  const dest = `${iface} ${path} ${iface}.${method} ${values.join(" ")}`;
-  const args = ["--print-reply", "--type=method_call", `--dest=${dest}`];
+  const args = ["--print-reply", "--type=method_call", `--dest=${iface}`, path, `${iface}.${method}`, ...values];
   try {
     console.debug(`hardware.js: dbusCall(${[cmd, ...args].join(" ")})`);
-    const output = cpr.execSync([cmd, ...args].join(" ").trim(), { encoding: "utf8" });
+    const output = cpr.execFileSync(cmd, args, { encoding: "utf8" });
     if (typeof callback === "function") callback(output.trim().replace(/\0/g, ""), null);
   } catch (error) {
     console.error("Call D-Bus:", error.message);
