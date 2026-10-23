@@ -9,14 +9,21 @@ publisher = SourceFileLoader('publisher', str(Path(__file__).with_name('publish-
 
 
 class ReleaseInputTests(unittest.TestCase):
-    def test_two_archives_and_sidecars_are_required(self):
+    def test_release_tag_matches_package_and_updater_asset_version(self):
+        import json
+        package = json.loads((Path(__file__).resolve().parents[2] / 'package.json').read_text())
+        self.assertEqual(publisher.TAG, package['version'])
+        self.assertEqual(publisher.VERSION, package['version'])
+        self.assertEqual(len(publisher.NAMES), 3)
+
+    def test_three_archives_and_sidecars_are_required(self):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp)
             for name in publisher.NAMES:
                 data = name.encode()
                 (path / name).write_bytes(data)
                 (path / (name + '.sha256')).write_text(f'{hashlib.sha256(data).hexdigest()}  {name}\n')
-            self.assertEqual(len(publisher.verify(path)), 4)
+            self.assertEqual(len(publisher.verify(path)), 2 * len(publisher.NAMES))
             first = path / publisher.NAMES[0]
             first.write_bytes(b'tampered')
             with self.assertRaisesRegex(RuntimeError, 'SHA-256 mismatch'):

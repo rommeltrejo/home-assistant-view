@@ -3,7 +3,7 @@
   "title": "HA View",
   "description": "Touch-first ambient display for Home Assistant",
   "author": "HA.View contributors",
-  "version": "0.34.0",
+  "version": "0.40.0",
   "license": "MIT",
   "haView": {
     "projectRepository": {
@@ -15,17 +15,17 @@
   "scripts": {
     "start": "electron .",
     "build": "node ha.view/build/build.js",
+    "check-packaging": "node ha.view/identity.js --check-packaging",
     "test:identity": "node --test ha.view/identity.test.js",
     "test:hooks": "node --test ha.view/hooks.test.js",
     "test:build": "node --test ha.view/build/*.test.js",
-    "test:source": "node --test ha.view/runtime/source.test.js",
+    "build:macos": "node ha.view/build/launcher.js darwin",
     "build:windows-portable": "node ha.view/build/windows-portable.js",
     "build:windows-kiosk": "node ha.view/build/windows-kiosk.js",
     "build:linux-kiosk": "node ha.view/build/linux-kiosk.js",
     "test:linux-kiosk": "python3 -m unittest discover -s os/linux/kiosk -p \"test_*.py\"",
     "lint": "node ha.view/build/lint.js",
-    "test:all": "node ha.view/build/ci-test.js",
-    "check-packaging": "node ha.view/identity.js --check-packaging"
+    "test:all": "node ha.view/build/ci-test.js"
   },
   "prettier": {
     "printWidth": 120

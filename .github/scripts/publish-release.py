@@ -12,11 +12,12 @@ import urllib.parse
 import urllib.request
 
 REPO = 'rommeltrejo/home-assistant-view'
-TAG = '0.34'
-VERSION = '0.34.0'
+TAG = '0.40.0'
+VERSION = '0.40.0'
 NAMES = (
     f'ha.view-{VERSION}-linux-x64-kiosk.tar.gz',
     f'ha.view-{VERSION}-win32-x64-portable.zip',
+    f'ha.view-{VERSION}-darwin-arm64.zip',
 )
 API = f'https://api.github.com/repos/{REPO}'
 TOKEN = os.environ.get('GH_TOKEN', '')
@@ -81,8 +82,8 @@ def main():
     absent(f'{API}/releases/tags/{TAG}')
     # The tag endpoint may not expose drafts; reject those explicitly as well.
     if any(item['tag_name'] == TAG for item in request('GET', f'{API}/releases?per_page=100')):
-        raise RuntimeError('Existing draft or published 0.34 release')
-    # Do not make a Git tag until both archives, their hashes and all naming are validated.
+        raise RuntimeError('Existing draft or published 0.40 release')
+    # Do not make a Git tag until all three archives, their hashes and all naming are validated.
     tag = request('POST', f'{API}/git/refs', json.dumps({'ref': f'refs/tags/{TAG}', 'sha': sha}).encode())
     if tag['object']['sha'] != sha:
         raise RuntimeError('Created tag does not point to the workflow commit')
@@ -90,7 +91,7 @@ def main():
         release = request('POST', f'{API}/releases', json.dumps({
         'tag_name': TAG, 'target_commitish': sha, 'name': f'HA View {TAG}',
         'draft': True, 'prerelease': False, 'generate_release_notes': False,
-        'body': 'Unsigned Linux x64 kiosk tarball and Windows x64 portable ZIP. Verify downloads with the accompanying SHA-256 files.'
+        'body': 'Unsigned Linux x64 kiosk tarball, Windows x64 portable ZIP and macOS arm64 app ZIP. Verify downloads with the accompanying SHA-256 files.'
     }).encode())
     except Exception as error:
         raise RuntimeError(f'Tag {TAG} was created; release draft creation failed; do not retry automatically') from error
@@ -101,7 +102,7 @@ def main():
     if {asset['name'] for asset in assets} != {file.name for file in files} or any(not a['size'] for a in assets):
         raise RuntimeError('Draft incomplete; leaving unpublished for manual recovery')
     request('PATCH', f"{API}/releases/{release['id']}", json.dumps({'draft': False}).encode())
-    print(f'Published {TAG} at {sha} with four verified assets')
+    print(f'Published {TAG} at {sha} with six verified assets')
 
 
 if __name__ == '__main__':

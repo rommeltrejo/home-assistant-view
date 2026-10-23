@@ -90,9 +90,49 @@ jobs:
           retention-days: 14
           compression-level: 0
 
+  macos:
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.x'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Static code analysis and standards
+        run: npm run lint
+      - name: Node regression tests
+        run: npm run test:all
+      - name: Build unsigned macOS app ZIP
+        run: npm run build:macos
+      - name: Name the macOS distribution and write its checksum
+        run: |
+          archive=$(find out/make/zip/darwin -name '*.zip' -type f | head -n 1)
+          test -n "$archive"
+          version=$(node -p "require('./package.json').version")
+          mkdir -p out/macos
+          cp "$archive" "out/macos/ha.view-$version-darwin-arm64.zip"
+          cd out/macos && shasum -a 256 "ha.view-$version-darwin-arm64.zip" > "ha.view-$version-darwin-arm64.zip.sha256"
+      - name: Upload complete macOS distribution
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ha.view-macos-arm64-unsigned
+          path: |
+            out/macos/ha.view-*-darwin-arm64.zip
+            out/macos/ha.view-*-darwin-arm64.zip.sha256
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
   verify-release:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'rommeltrejo/home-assistant-view' && contains(github.event.head_commit.message, 'Enable one-shot 0.34 release')
-    needs: [linux, windows]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'rommeltrejo/home-assistant-view' && contains(github.event.head_commit.message, 'Enable one-shot 0.40 release')
+    needs: [linux, windows, macos]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -100,10 +140,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Download both CI distributions
+      - name: Download all CI distributions
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
-          pattern: ha.view-*-x64-unsigned
+          pattern: ha.view-*-unsigned
           path: release-input
           merge-multiple: true
       - name: Test release verification logic
@@ -113,19 +153,19 @@ jobs:
       - name: Upload verified release input
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: verified-release-0.34
+          name: verified-release-0.40
           path: release-input/
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
 
   publish-release:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'rommeltrejo/home-assistant-view' && contains(github.event.head_commit.message, 'Enable one-shot 0.34 release')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'rommeltrejo/home-assistant-view' && contains(github.event.head_commit.message, 'Enable one-shot 0.40 release')
     needs: [verify-release]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     concurrency:
-      group: one-shot-ha-view-0.34-publication
+      group: one-shot-ha-view-0.40-publication
       cancel-in-progress: false
     permissions:
       contents: write
@@ -138,7 +178,7 @@ jobs:
       - name: Download verified assets
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
-          name: verified-release-0.34
+          name: verified-release-0.40
           path: release-input
       - name: One-shot draft then publish
         env:

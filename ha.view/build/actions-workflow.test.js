@@ -21,11 +21,12 @@ test('unsigned workflow has bounded native runners and read-only triggers', () =
   assert.deepEqual(workflow.permissions, { contents: 'read' });
   assert.deepEqual(Object.keys(workflow.on).sort(), ['pull_request', 'push', 'workflow_dispatch']);
   for (const event of ['push', 'pull_request']) assert.deepEqual(workflow.on[event].branches, ['main']);
-  assert.deepEqual(Object.keys(workflow.jobs).sort(), ['linux', 'publish-release', 'verify-release', 'windows']);
+  assert.deepEqual(Object.keys(workflow.jobs).sort(), ['linux', 'macos', 'publish-release', 'verify-release', 'windows']);
   assert.equal(workflow.jobs.windows['runs-on'], 'windows-2022');
   assert.equal(workflow.jobs.linux['runs-on'], 'ubuntu-24.04');
-  assert.doesNotMatch(source, /macos|pull_request_target/i);
-  for (const job of [workflow.jobs.linux, workflow.jobs.windows]) {
+  assert.equal(workflow.jobs.macos['runs-on'], 'macos-14');
+  assert.doesNotMatch(source, /pull_request_target/i);
+  for (const job of [workflow.jobs.linux, workflow.jobs.windows, workflow.jobs.macos]) {
     assert.ok(job['timeout-minutes'] > 0 && job['timeout-minutes'] <= 30);
     for (const step of job.steps.filter(s => s.uses)) {
       const [action, sha] = step.uses.split('@');
@@ -48,16 +49,16 @@ test('unsigned workflow has bounded native runners and read-only triggers', () =
     assert.equal(paths[1], paths[0] + '.sha256');
   }
 });
-test('0.34 publisher is one-shot, gated by exact commit platform jobs and verified hashes', () => {
+test('0.40 publisher is one-shot, gated by exact commit platform jobs and verified hashes', () => {
   const verify = workflow.jobs['verify-release'];
   const publish = workflow.jobs['publish-release'];
-  assert.deepEqual(verify.needs, ['linux', 'windows']);
+  assert.deepEqual(verify.needs, ['linux', 'windows', 'macos']);
   assert.deepEqual(publish.needs, ['verify-release']);
   for (const job of [verify, publish]) {
     assert.match(job.if, /github.event_name == 'push'/);
     assert.match(job.if, /github.ref == 'refs\/heads\/main'/);
     assert.match(job.if, /github.repository == 'rommeltrejo\/home-assistant-view'/);
-    assert.match(job.if, /contains\(github.event.head_commit.message, 'Enable one-shot 0\.34 release'\)/);
+    assert.match(job.if, /contains\(github.event.head_commit.message, 'Enable one-shot 0\.40 release'\)/);
     assert.equal(job['runs-on'], 'ubuntu-24.04');
     assert.ok(job['timeout-minutes'] <= 15);
     assert.equal(job.steps[0].with['persist-credentials'], false);
@@ -65,7 +66,7 @@ test('0.34 publisher is one-shot, gated by exact commit platform jobs and verifi
   assert.deepEqual(workflow.permissions, { contents: 'read' });
   assert.deepEqual(publish.permissions, { contents: 'write', actions: 'read' });
   assert.equal(verify.permissions, undefined);
-  assert.equal(publish.concurrency.group, 'one-shot-ha-view-0.34-publication');
+  assert.equal(publish.concurrency.group, 'one-shot-ha-view-0.40-publication');
   assert.equal(publish.concurrency['cancel-in-progress'], false);
   assert.match(verify.steps.map(s => s.run || '').join('\n'), /verify-release-assets\.py/);
   assert.match(publish.steps.map(s => s.run || '').join('\n'), /publish-release\.py/);
