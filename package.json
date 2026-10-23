@@ -5,11 +5,16 @@
   "author": "HA.View contributors",
   "version": "0.34.0",
   "license": "MIT",
-  "haView": { "projectRepository": { "url": "https://github.com/rommeltrejo/home-assistant-view", "verified": true } },
+  "haView": {
+    "projectRepository": {
+      "url": "https://github.com/rommeltrejo/home-assistant-view",
+      "verified": true
+    }
+  },
   "main": "index.js",
   "scripts": {
     "start": "electron .",
-    "build": "node ha.view/identity.js --check-packaging",
+    "build": "node ha.view/build/build.js",
     "test:identity": "node --test ha.view/identity.test.js",
     "test:hooks": "node --test ha.view/hooks.test.js",
     "test:build": "node --test ha.view/build/*.test.js",
@@ -19,7 +24,8 @@
     "build:linux-kiosk": "node ha.view/build/linux-kiosk.js",
     "test:linux-kiosk": "python3 -m unittest discover -s os/linux/kiosk -p \"test_*.py\"",
     "lint": "node ha.view/build/lint.js",
-    "test:all": "node ha.view/build/ci-test.js"
+    "test:all": "node ha.view/build/ci-test.js",
+    "check-packaging": "node ha.view/identity.js --check-packaging"
   },
   "prettier": {
     "printWidth": 120
