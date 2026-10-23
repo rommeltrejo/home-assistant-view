@@ -1502,7 +1502,5 @@ module.exports = {
   checkPackageUpgrades,
   shutdownSystem,
   rebootSystem,
-  execSyncCommand,
-  execAsyncCommand,
   execScriptCommand,
 };
