@@ -79,7 +79,7 @@ def process_identity(pid):
                     start=fields[19], uid=int(uids[0]), uids=tuple(uids),
                     exe=os.readlink(proc / 'exe') if fields[0] != 'Z' else '',
                     cmd=(proc / 'cmdline').read_bytes().split(b'\0')[:-1])
-    except (FileNotFoundError, ProcessLookupError): return None
+    except OSError: return None  # Vanished or unreadable (e.g. another user's process): never an owned payload.
 
 def processes():
     return [p for entry in pathlib.Path('/proc').iterdir() if entry.name.isdigit()

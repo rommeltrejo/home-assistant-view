@@ -1,4 +1,5 @@
 import hashlib, importlib.util, json, pathlib, tempfile, unittest
+from unittest import mock
 spec = importlib.util.spec_from_file_location('installer', pathlib.Path(__file__).with_name('install.py'))
 m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
 
@@ -47,3 +48,14 @@ class Integrity(unittest.TestCase):
     def test_version(self):
         self.manifest['version'] = 'different'; self.save()
         with self.assertRaises(ValueError): m.verify(self.bundle)
+
+class ProcessScan(unittest.TestCase):
+    def test_unreadable_process_is_skipped(self):
+        # Updates scan /proc before stopping owned processes. One unreadable
+        # entry (another user's process under ptrace restrictions) must not
+        # abort the scan or the update.
+        with mock.patch.object(pathlib.Path, 'read_text', side_effect=PermissionError(13, 'Permission denied')):
+            self.assertIsNone(m.process_identity(1))
+        with mock.patch.object(pathlib.Path, 'iterdir', return_value=iter([pathlib.Path('/proc/1')])), \
+                mock.patch.object(pathlib.Path, 'read_text', side_effect=PermissionError(13, 'Permission denied')):
+            self.assertEqual(m.processes(), [])
