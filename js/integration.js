@@ -11,7 +11,20 @@ global.INTEGRATION = global.INTEGRATION || {
  *
  * @returns {Promise<boolean>} True if the initialization was successful.
  */
+/**
+ * MQTT is disabled by default. It runs only with an explicit opt-in:
+ * `--mqtt-enable` (presence flag, or `=true`) plus a broker `--mqtt-url`.
+ *
+ * @returns {boolean} True if MQTT was enabled in the arguments.
+ */
+const mqttEnabled = () => {
+  return "mqtt_enable" in ARGS && ARGS.mqtt_enable !== "false";
+};
+
 const init = async () => {
+  if (!mqttEnabled()) {
+    return false;
+  }
   if (!ARGS.mqtt_url) {
     return false;
   }
@@ -1636,4 +1649,5 @@ const initHeartbeat = () => {
 module.exports = {
   init,
   update,
+  mqttEnabled,
 };

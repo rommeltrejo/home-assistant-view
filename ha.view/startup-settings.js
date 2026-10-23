@@ -5,7 +5,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { inspect, validateURL } = require('./initial-settings');
 const settings = new Set(['web_url', 'web_theme', 'web_zoom', 'web_widget', 'web_pager',
-  'app_kiosk', 'app_disable', 'app_early', 'mqtt_url', 'mqtt_user', 'mqtt_password',
+  'app_kiosk', 'app_disable', 'app_early', 'mqtt_enable', 'mqtt_url', 'mqtt_user', 'mqtt_password',
   'mqtt_discovery', 'ignore_certificate_errors', 'ha_view_idle_ms', 'ha_view_clock_face']);
 const transient = new Set(['help', 'version', 'setup', 'app_reset', 'app_debug', 'enable_logging']);
 function operational(key) {
@@ -13,7 +13,7 @@ function operational(key) {
 }
 function meaningful(args = {}) {
   return Object.fromEntries(Object.entries(args).filter(([key, value]) =>
-    settings.has(key) && (value === null ? ['app_early', 'ignore_certificate_errors'].includes(key) :
+    settings.has(key) && (value === null ? ['app_early', 'ignore_certificate_errors', 'mqtt_enable'].includes(key) :
       Array.isArray(value) ? value.length > 0 : typeof value === 'string' ? value.trim() !== '' : value !== undefined)));
 }
 function merge(saved, cli = {}) {
@@ -33,7 +33,7 @@ function validate(args) {
     if (Object.hasOwn(args, key) && typeof args[key] !== 'string') throw new Error(`Invalid ${key}.`);
   }
   for (const key of ['web_widget', 'web_pager']) oneOf(key, ['true', 'false']);
-  for (const key of ['app_early', 'ignore_certificate_errors']) oneOf(key, [null, 'true', 'false']);
+  for (const key of ['app_early', 'ignore_certificate_errors', 'mqtt_enable']) oneOf(key, [null, 'true', 'false']);
   for (const key of ['web_zoom', 'ha_view_idle_ms']) {
     if (!Object.hasOwn(args, key)) continue;
     const value = args[key];

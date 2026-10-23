@@ -10,7 +10,7 @@ const log = require("electron-log");
 const { app, powerMonitor } = require("electron");
 const Bonjour = require("bonjour-service");
 const Events = require("events");
-const { createIdentity, applyIdentityPolicy } = require("./ha.view/identity");
+const { createIdentity } = require("./ha.view/identity");
 const { quitStatus } = require("./ha.view/quit-status");
 
 global.APP = global.APP || {};
@@ -226,9 +226,6 @@ const initArgs = async () => {
     args.app_reset = args.app_reset.split(",").map((reset) => reset.trim());
   }
 
-  // Disable upstream installer registration when HA.View has no install target.
-  applyIdentityPolicy(APP, args);
-
   // Calculate arguments hash
   const argsFileHash = crypto.createHash("sha256").update(JSON.stringify(startupSettings.meaningful(args))).digest("hex");
   const argsUpdated = argsFileHashExists && argsFileHash !== fs.readFileSync(argsFileHashPath, "utf8");
@@ -443,6 +440,8 @@ const promptArgs = async (proc, defaults) => {
         const value = (answer.trim() || fallback.match(/[YN]/)[0]).toLowerCase();
         if (!["y", "yes"].includes(value)) {
           ignore = ignore.concat(["mqtt_url", "mqtt_user", "mqtt_password", "mqtt_discovery"]);
+        } else {
+          args.mqtt_enable = null;
         }
       } else if (key === "check") {
         const json = JSON.stringify(args, null, 2);
