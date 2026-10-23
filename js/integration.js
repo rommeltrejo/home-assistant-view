@@ -1,5 +1,6 @@
 const mqtt = require("mqtt");
 const hardware = require("./hardware");
+const updater = require("../ha.view/updater");
 const { app } = require("electron");
 
 global.INTEGRATION = global.INTEGRATION || {
@@ -297,9 +298,14 @@ const initApp = () => {
     unique_id: `${INTEGRATION.node}_app`,
     state_topic: `${root}/version/state`,
     device: INTEGRATION.device,
-    ...(HARDWARE.support.access.install &&
-      HARDWARE.support.access.service &&
-      HARDWARE.support.access.deb && {
+    ...(APP.scripts.install === "builtin" &&
+      updater.canInstall({
+        platform: process.platform,
+        arch: process.arch,
+        build: APP.build,
+        appPath: APP.path,
+        access: HARDWARE.support.access,
+      }) && {
         command_topic: `${root}/install`,
         payload_install: "app_early" in ARGS ? "update early" : "update",
       }),
@@ -308,22 +314,46 @@ const initApp = () => {
     removeConfig("update", config, true);
     return;
   }
-  publishConfig("update", config, true)
-    .on("message", (topic, message) => {
-      if (topic === config.command_topic) {
-        console.info("Update App...");
-        hardware.setDisplayStatus("ON", () => {
-          const args = ["-c", `bash <(wget -qO- ${APP.scripts.install}) ${message.toString()}`];
-          hardware.execScriptCommand("bash", args, (progress, error) => {
-            if (progress) {
-              console.info(`Progress: ${progress}%`);
-            }
-            updateApp(progress);
+  const published = publishConfig("update", config, true);
+  if (config.command_topic) {
+    let updateRunning = false;
+    published
+      .on("message", (topic, message) => {
+        if (topic === config.command_topic && message.toString() === config.payload_install) {
+          if (updateRunning) {
+            console.info("Update App: already in progress, ignoring duplicate command.");
+            return;
+          }
+          updateRunning = true;
+          console.info("Update App...");
+          hardware.setDisplayStatus("ON", () => {
+            updater
+              .install({
+                app: APP,
+                latest: APP.releases.latest,
+                onProgress: (progress) => {
+                  console.info(`Progress: ${progress}%`);
+                  updateApp(progress);
+                },
+              })
+              .then(() => {
+                if (["win32", "darwin"].includes(process.platform)) {
+                  APP.exiting = true;
+                  app.quit();
+                }
+              })
+              .catch((error) => {
+                console.error("App update failed:", error.message);
+                updateApp(0);
+              })
+              .finally(() => {
+                if (!APP.exiting) updateRunning = false;
+              });
           });
-        });
-      }
-    })
-    .subscribe(config.command_topic);
+        }
+      })
+      .subscribe(config.command_topic);
+  }
   updateApp();
 };
 

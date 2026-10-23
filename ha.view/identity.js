@@ -32,20 +32,18 @@ const createIdentity = (metadata) => {
       url: repository ? `https://api.github.com/repos/${repository.owner}/${repository.name}/releases` : null,
       latest: null,
     },
-    // OS packaging and install/update scripts are not available in this phase.
-    scripts: { install: null },
+    // Installs run through the built-in updater (ha.view/updater.js), which
+    // installs the platform installer bundled with each verified release.
+    // No remote install script is downloaded or executed.
+    scripts: { install: "builtin" },
   };
-};
-
-const applyIdentityPolicy = (identity, args) => {
-  if (!identity.scripts.install && !args.app_disable.includes("mqtt_app")) args.app_disable.push("mqtt_app");
 };
 
 const assertPackagingAllowed = () => {
   throw new Error("HA View is source-only: packaging and publishing are disabled in this phase.");
 };
 
-module.exports = { createIdentity, applyIdentityPolicy, assertPackagingAllowed };
+module.exports = { createIdentity, assertPackagingAllowed };
 if (require.main === module) {
   try {
     assertPackagingAllowed();

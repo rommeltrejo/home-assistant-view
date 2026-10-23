@@ -11,7 +11,7 @@ const runtime = new Set([
   'quit-status.js', 'linux-display.js', 'layout-store.js', 'layout-runtime.js', 'layout-face.js', 'layout-editor.js', 'layout-editor-preload.js',
   'layout-editor-renderer.js', 'layout-editor.html', 'layout.css',
   'startup-recovery.js', 'startup-recovery-controller.js', 'startup-recovery-probe.js', 'startup-recovery-preload.js', 'startup-recovery-renderer.js', 'startup-recovery.html',
-  'startup-settings.js', 'installer-startup.js', 'initial-settings.js', 'initial-settings-preload.js', 'initial-settings-renderer.js', 'initial-settings.html', 'management-policy.js', 'management-preload.js', 'management-renderer.js', 'management.html', 'management.js',
+  'startup-settings.js', 'installer-startup.js', 'initial-settings.js', 'initial-settings-preload.js', 'initial-settings-renderer.js', 'initial-settings.html', 'management-policy.js', 'management-preload.js', 'management-renderer.js', 'management.html', 'management.js', 'updater.js',
 ]);
 const assets = new Set([
   'index.js', 'package.json', 'LICENSE', 'README.md',

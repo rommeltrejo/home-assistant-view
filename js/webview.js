@@ -1512,6 +1512,7 @@ const latestRelease = async () => {
         version: (release.tag_name || " ").replace(/^v/i, ""),
         summary: release.body || " ",
         url: release.html_url || " ",
+        assets: (release.assets || []).map((asset) => ({ name: asset.name, url: asset.browser_download_url })),
       };
       EVENTS.emit("updateApp");
     }

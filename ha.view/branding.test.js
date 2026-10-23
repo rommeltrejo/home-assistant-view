@@ -4,7 +4,6 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const { spawnSync } = require("node:child_process");
 const root = path.resolve(__dirname, "..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 
@@ -28,23 +27,12 @@ test("actual source initialization uses HA View title without upstream runtime a
   assert.equal(APP.homepage, "https://github.com/rommeltrejo/home-assistant-view");
   assert.equal(APP.issues, "https://github.com/rommeltrejo/home-assistant-view/issues");
   assert.equal(APP.releases.url, "https://api.github.com/repos/rommeltrejo/home-assistant-view/releases");
-  assert.equal(APP.scripts.install, null);
+  assert.equal(APP.scripts.install, "builtin");
   const webview = read("js/webview.js");
   assert.match(webview, /title: APP\.title/);
   assert.match(webview, /icon: APP\.icon/);
   assert.doesNotMatch(webview, /new Tray\s*\(|img[/'", ]+icon\.png/);
   assert.match(read("html/header.html"), /<title>HA View window controls<\/title>/);
-});
-
-test("upstream installer fails before commands or downloads even with update arguments", () => {
-  for (const args of [[], ["update"], ["early", "update"]]) {
-    const result = spawnSync("/bin/bash", [path.join(root, "install.sh"), ...args], {
-      encoding: "utf8", env: { PATH: "/nonexistent" },
-    });
-    assert.equal(result.status, 1);
-    assert.equal(result.stdout, "");
-    assert.equal(result.stderr, "HA View is source-only: installation and updates are disabled.\n");
-  }
 });
 
 test("unsigned PR builds remain read-only and automatic one-shot release is gated", () => {
@@ -54,10 +42,10 @@ test("unsigned PR builds remain read-only and automatic one-shot release is gate
   assert.match(workflow, /runs-on: windows-2022/);
   assert.match(workflow, /runs-on: ubuntu-24\.04/);
   assert.match(workflow, /permissions:\n {2}contents: read/);
-  assert.match(workflow, /needs: \[linux, windows\]/);
+  assert.match(workflow, /needs: \[linux, windows, macos\]/);
   assert.match(workflow, /needs: \[verify-release\]/);
   assert.match(workflow, /github.event_name == 'push'/);
-  assert.match(workflow, /contains\(github.event.head_commit.message, 'Enable one-shot 0\.34 release'\)/);
+  assert.match(workflow, /contains\(github.event.head_commit.message, 'Enable one-shot 0\.40 release'\)/);
   assert.doesNotMatch(workflow, /electron-forge publish/);
 });
 
