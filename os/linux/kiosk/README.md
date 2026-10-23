@@ -25,7 +25,11 @@ normal Quit. No autologon, linger, system-wide desktop session, or security bypa
 Errors are recorded in `~/.local/state/ha.view/kiosk.log` (or XDG_STATE_HOME).
 
 `./install.sh --force` updates only an owned install, preserving Electron user settings
-and retaining one previous version. `./install.sh --rollback` swaps it back. Both stop only identity-checked installed supervisors and payload
+and retaining one previous version. `./install.sh --rollback` swaps it back.
+If MQTT is turned on, the same update can be started from Home Assistant instead:
+the app downloads the new release, checks it against the fingerprint published
+with it, and runs this installer with `--force`. That needs password-free sudo,
+because no one is at the screen to type a password when an update starts. Both stop only identity-checked installed supervisors and payload
 session members before swapping; foreign/unverifiable group members cause refusal.
 Termination is bounded: TERM, then KILL if needed. Each installer signal reports the
 exact PID, UID, executable and signal; it never uses killall or signals foreign groups.

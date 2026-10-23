@@ -1,6 +1,6 @@
 # Idle faces
 
-After the inactivity timer expires, HA View shows a face. Press and hold the display to open the face chooser, swipe between choices, and tap one to show it. The eye button hides or shows a choice in the chooser.
+After the inactivity timer expires, HA View shows a face. Touch the screen to return to your dashboard. Press and hold the display to open the face chooser, swipe between choices, and tap one to show it. The eye button hides or shows a choice in the chooser.
 
 ## Clocks
 
