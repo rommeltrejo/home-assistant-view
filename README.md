@@ -6,14 +6,15 @@ HA View turns a Home Assistant dashboard into a touch-friendly, fullscreen displ
 
 ## Downloads
 
-**HA View 0.34** provides unsigned x64 distributions built from the same verified source commit. Download the archive and its matching SHA-256 file:
+**HA View 0.40.0** — pick your platform:
 
-| Platform | Download | Checksum |
-| --- | --- | --- |
-| Linux x64 kiosk | [tar.gz](https://github.com/rommeltrejo/home-assistant-view/releases/download/0.34/ha.view-0.34.0-linux-x64-kiosk.tar.gz) | [SHA-256](https://github.com/rommeltrejo/home-assistant-view/releases/download/0.34/ha.view-0.34.0-linux-x64-kiosk.tar.gz.sha256) |
-| Windows x64 portable | [ZIP](https://github.com/rommeltrejo/home-assistant-view/releases/download/0.34/ha.view-0.34.0-win32-x64-portable.zip) | [SHA-256](https://github.com/rommeltrejo/home-assistant-view/releases/download/0.34/ha.view-0.34.0-win32-x64-portable.zip.sha256) |
+| Platform | Download |
+| --- | --- |
+| Linux x64 kiosk | [tar.gz](https://github.com/rommeltrejo/home-assistant-view/releases/download/0.40.0/ha.view-0.40.0-linux-x64-kiosk.tar.gz) |
+| Windows x64 portable | [ZIP](https://github.com/rommeltrejo/home-assistant-view/releases/download/0.40.0/ha.view-0.40.0-win32-x64-portable.zip) |
+| macOS Apple silicon | [ZIP](https://github.com/rommeltrejo/home-assistant-view/releases/download/0.40.0/ha.view-0.40.0-darwin-arm64.zip) |
 
-Verify each downloaded archive with its sidecar (`sha256sum -c <filename>.sha256` on Linux, or compare with `Get-FileHash <filename> -Algorithm SHA256` on Windows). These are unsigned builds; installation and automatic updates are not enabled. [Run from source](#run-from-source) instead if preferred.
+Download, unzip, and follow the short steps for your platform below. The first time HA View opens, it asks for your Home Assistant address; after that it opens straight to your dashboard.
 
 ## Explore HA View
 
@@ -45,42 +46,33 @@ Use the built-in browser for a website, or open the Home Assistant shortcuts for
 
 [Using the browser](docs/browser/README.md) · [Home Assistant dashboard](docs/HA/README.md)
 
-## Run from source
-
-From the repository root, install dependencies and launch the Electron app directly:
-
-```sh
-npm ci
-npm start
-```
-
-`npm start` runs `electron .` against this source tree; it does not package, sign or deploy an app. The app uses your saved Home Assistant URL. To supply a URL explicitly, use `npm start -- --web-url=http://YOUR-HA:8123/ --app-kiosk=framed`.
-
-On a first launch without a saved URL, enter your dashboard URL in native settings. Home Assistant handles dashboard login. Existing settings are not reset.
-
 ## Windows portable
 
-Extract the **whole ZIP folder** and double-click **Run.cmd**. The bundled Electron app needs no Node, compiler, or installation. First run opens native URL settings; an optional `Run.cmd --web-url=http://YOUR-HA:8123/ --app-kiosk=framed` supplies the URL. Your saved profile is retained.
+Extract the **whole ZIP folder** and double-click **Run.cmd**. Nothing to install. The first time it opens, enter your Home Assistant address; your settings are saved for next time. If you start it from a command prompt, `Run.cmd --web-url=http://YOUR-HA:8123/ --app-kiosk=framed` supplies the address up front.
 
-**Install-Kiosk.cmd** and **Update-Kiosk.cmd** are separate, optional per-user kiosk operations for logon startup and restart recovery. Direct Run does not install or update a kiosk. Keep the separate kiosk folder intact. See `os/windows/portable/README.md`.
+**Install-Kiosk.cmd** and **Update-Kiosk.cmd** are separate, optional tools that set HA View up as a kiosk on this Windows user account: it starts when you log on, and restarts itself if it closes unexpectedly. Running HA View directly with Run.cmd does neither. Keep the separate kiosk folder intact. See `os/windows/portable/README.md`.
 
-This build is unsigned: **Unknown publisher is expected**. Windows protections remain unchanged; no security bypass or certificate setup is included.
+## macOS
 
-Build from this source tree with Node 24 and a Windows x64 native host compiled from `os/windows/kiosk/native/Kiosk.cs`: `HA_VIEW_KIOSK_NATIVE=/path/to/HA.View.Kiosk.exe npm run build:windows-portable`. Output is `out/windows-portable`. Existing strict signing build modes are separate and unchanged.
+HA View for Mac comes as an app inside a ZIP file. Unzip it, move **ha.view.app** into your Applications folder, and open it. If macOS asks you to confirm the first time, right-click the app and choose **Open**.
 
-macOS packaging remains outside the source-run workflow. Physical wake/hardware behavior and macOS MQTT/device integration are not claimed verified.
+The first time it opens, enter your Home Assistant address and sign in. After that, HA View opens straight to your dashboard, with the same idle faces, browser, and settings as on the other platforms.
 
 ## Linux prebuilt
 
-Extract the **whole tar.gz folder**, preserving executable permissions, then run `./Run.sh` from that folder (or invoke it by path from another directory). It invokes bundled Electron directly and forwards arguments, for example `./Run.sh --web-url=http://YOUR-HA:8123/ --app-kiosk=framed`. No Node, compiler, kiosk installation or CLI credentials are needed. A supported graphical Linux desktop and Electron shared libraries are required. First launch without a saved URL opens native settings, followed by Home Assistant’s own login.
+Extract the **whole tar.gz folder**, keeping the files together, then run `./Run.sh` from that folder. Nothing to install, and you can pass options the same way, for example `./Run.sh --web-url=http://YOUR-HA:8123/ --app-kiosk=framed`. You need a graphical Linux desktop. The first time it opens, enter your Home Assistant address, then sign in on Home Assistant's own login screen.
 
-Direct extraction depends on the distribution allowing Chromium’s sandbox to initialize. On desktops that restrict unprivileged user namespaces, direct extracted execution may fail. Do **not** add `--no-sandbox` or disable system security policy. Use `./install.sh` for the existing standard root-owned installation and Chromium setuid helper; it requires Python 3 and normal sudo authentication, runs the UI as your normal user, and enables desktop-login startup/recovery. See `os/linux/kiosk/README.md` for update, rollback and dependency guidance. Direct Run itself neither installs nor enables a watchdog.
+Some Linux desktops restrict how apps like this one are allowed to run, and the extracted copy may refuse to start there. If that happens, do **not** reach for `--no-sandbox` or turn off system security settings — run `./install.sh` from the same folder instead. It installs HA View the standard way (it asks for your normal sudo password), runs it as your own user, and sets it up to start when you log in and to recover from crashes. See `os/linux/kiosk/README.md` for updates, rollback and troubleshooting. Running `./Run.sh` directly does not install anything, and does not restart the app after a crash.
 
 ## TouchKio capabilities
 
 HA View builds on TouchKio’s existing browser and MQTT features. Depending on the platform, hardware and MQTT setup, these include touch-focused browsing, page navigation, zoom and themes; screen wake behavior; and remote access to tools such as the on-screen keyboard, display controls, network details, system status and sensors.
 
-For upstream Linux, Raspberry Pi and Debian setup guidance, consult the [TouchKio project](https://github.com/leukipp/touchkio); this README does not reproduce those instructions. The normal source-run workflow uses `npm start`; availability of inherited hardware and MQTT features varies by platform and setup.
+MQTT is **off unless you turn it on**. During first-time setup, HA View asks whether you want to connect to an MQTT broker; say yes and enter your broker's address, and the kiosk appears in Home Assistant as a device you can control and read from. If you start HA View from the command line instead, the same choice is `--mqtt-enable` together with `--mqtt-url=mqtt://YOUR-BROKER:1883`. Individual MQTT features can still be turned off with `--app-disable=mqtt_<feature>` (including `mqtt_app` for the app update item).
+
+With MQTT on, the **App** update item in Home Assistant can also install a new version for you. It downloads the new release, checks it against the fingerprint published with it, and installs it the same way the original installer did; on Linux it keeps the previous version, in case you want to roll back. The install option appears when HA View runs from an installed copy, and on Linux it needs password-free sudo, because no one is at the screen to type a password when an update starts.
+
+For Linux, Raspberry Pi and Debian setup guidance from the original project, see [TouchKio](https://github.com/leukipp/touchkio). Which hardware and MQTT features are available depends on your platform and setup.
 
 ## Credits
 
